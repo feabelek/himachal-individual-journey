@@ -15,8 +15,10 @@ import {
   CHAPTER_DIALOGUES as HIMACHAL_DIALOGUES,
   IMAGES,
   ELEVATION_RANGES,
+  HIMACHAL_CONCLUSION,
   SEASON_COLORS,
   SEASON_CYCLES,
+  HIMACHAL_LOCATIONS,
   STORY as HIMACHAL_STORY,
   STORY_REGISTRY
 } from './stories/index.js';
@@ -48,6 +50,60 @@ const RIVERS_URL = MAP_ASSETS.himachal.rivers;
 const TEMPLE_URL = MAP_ASSETS.himachal.temple;
 const SANCTUARY_URL = MAP_ASSETS.himachal.sanctuary;
 const HIMACHAL_BOUNDARY_URL = MAP_ASSETS.himachal.boundary;
+
+// Exhibition controls intentionally sit on top of the existing story engine.
+// They share STORY/currentStoryIndex rather than creating a second narrative.
+let exhibitionSeason = 'summer';
+let exhibitionMode = 'guided';
+let miniMap = null;
+let miniMapReady = false;
+let exhibitionPoints = [];
+let miniPositionMarker = null;
+let profileElevations = [];
+let miniRouteMetrics = { summer: null, winter: null };
+
+function routeCoordinatesFromGeoJSON(geoJSON, reverse = false) {
+  const feature = geoJSON?.features?.find((item) => item.geometry?.type === 'LineString');
+  if (!feature) return [];
+  const coordinates = feature.geometry.coordinates.map(([longitude, latitude]) => [longitude, latitude]);
+  return reverse ? coordinates.reverse() : coordinates;
+}
+
+function buildMiniRouteMetric(coordinates) {
+  const distances = [0];
+  let length = 0;
+  for (let index = 1; index < coordinates.length; index += 1) {
+    const previous = coordinates[index - 1];
+    const current = coordinates[index];
+    const latitudeScale = Math.cos(((previous[1] + current[1]) / 2) * Math.PI / 180);
+    length += Math.hypot((current[0] - previous[0]) * latitudeScale, current[1] - previous[1]);
+    distances.push(length);
+  }
+  return { coordinates, distances, length };
+}
+
+function progressOnMiniRoute(coordinate, metric) {
+  if (!coordinate || !metric?.coordinates?.length || !metric.length) return null;
+  let closestDistance = Infinity;
+  let closestProgress = 0;
+  for (let index = 1; index < metric.coordinates.length; index += 1) {
+    const start = metric.coordinates[index - 1];
+    const end = metric.coordinates[index];
+    const latitudeScale = Math.cos(coordinate[1] * Math.PI / 180);
+    const segmentX = (end[0] - start[0]) * latitudeScale;
+    const segmentY = end[1] - start[1];
+    const pointX = (coordinate[0] - start[0]) * latitudeScale;
+    const pointY = coordinate[1] - start[1];
+    const segmentLength = segmentX * segmentX + segmentY * segmentY;
+    const ratio = segmentLength ? Math.max(0, Math.min(1, (pointX * segmentX + pointY * segmentY) / segmentLength)) : 0;
+    const distance = Math.hypot(pointX - segmentX * ratio, pointY - segmentY * ratio);
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestProgress = (metric.distances[index - 1] + (metric.distances[index] - metric.distances[index - 1]) * ratio) / metric.length;
+    }
+  }
+  return closestProgress;
+}
 
 
 function utm43ToWgs84(
@@ -257,7 +313,8 @@ let routeLength = 0;
 
 let routeStartProgress = 0;
 
-let flockProgress = 0;
+let journeyProgress = 0;
+let conclusionActive = false;
 
 let flockTravelDirection = 1;
 
@@ -482,13 +539,72 @@ if (
 // NAVIGATION CONTROL
 // ============================================================
 
-map.addControl(
+// Retained for the India overview; the journey uses the compact controls
+// rendered in the exhibition interface instead.
+map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-  new maplibregl.NavigationControl(),
-
-  'top-right'
-
-);
+// A deliberately quiet second MapLibre map: north-up, fixed extent, and
+// independent from the cinematic camera on the primary map.
+function initializeMiniMap() {
+miniMap = new maplibregl.Map({
+  container: 'mini-map',
+  interactive: true,
+  attributionControl: false,
+  style: {
+    version: 8,
+    sources: { satellite: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 256 } },
+    layers: [{ id: 'satellite', type: 'raster', source: 'satellite', paint: { 'raster-saturation': -0.35, 'raster-brightness-max': 0.8 } }]
+  },
+  center: [76.7, 32.15],
+  zoom: 7,
+  bearing: 0,
+  pitch: 0
+});
+miniMap.on('load', async () => {
+  try {
+    const [summerResponse, winterResponse, pointsResponse] = await Promise.all([
+      fetch(ROUTE_URL), fetch(ISPUR_DARCHA_ROUTE_URL), fetch(POINTS_URL)
+    ]);
+    const summer = await summerResponse.json();
+    const winter = await winterResponse.json();
+    const points = await pointsResponse.json();
+    const pointFeatures = (points.features || []).map((feature, index) => ({ ...feature, id: index }));
+    exhibitionPoints = pointFeatures;
+    renderElevationProfile();
+    const summerCoordinates = routeCoordinatesFromGeoJSON(summer);
+    const winterCoordinates = routeCoordinatesFromGeoJSON(winter, true);
+    miniRouteMetrics = {
+      summer: buildMiniRouteMetric(summerCoordinates),
+      winter: buildMiniRouteMetric(winterCoordinates)
+    };
+    const miniWinter = {
+      ...winter,
+      features: winter.features.map((feature) => ({
+        ...feature,
+        geometry: { ...feature.geometry, coordinates: winterCoordinates }
+      }))
+    };
+    miniMap.addSource('mini-summer', { type: 'geojson', data: summer, lineMetrics: true });
+    miniMap.addSource('mini-winter', { type: 'geojson', data: miniWinter, lineMetrics: true });
+    miniMap.addLayer({ id: 'mini-summer-line', type: 'line', source: 'mini-summer', paint: { 'line-color': '#f18700', 'line-width': 2.2, 'line-opacity': 0.38 } });
+    miniMap.addLayer({ id: 'mini-winter-line', type: 'line', source: 'mini-winter', paint: { 'line-color': '#55aadd', 'line-width': 2, 'line-dasharray': [2, 2], 'line-opacity': 0.34 } });
+    miniMap.addLayer({ id: 'mini-summer-travel', type: 'line', source: 'mini-summer', paint: { 'line-color': '#f18700', 'line-width': 3.4, 'line-opacity': 0 } });
+    miniMap.addLayer({ id: 'mini-winter-travel', type: 'line', source: 'mini-winter', paint: { 'line-color': '#55aadd', 'line-width': 3.2, 'line-opacity': 0 } });
+    const positionElement = document.createElement('div');
+    positionElement.className = 'mini-position-marker';
+    positionElement.setAttribute('aria-label', 'Current journey position');
+    miniPositionMarker = new maplibregl.Marker({ element: positionElement, anchor: 'center' })
+      .setLngLat(getRouteCoordinate(journeyProgress) || STORY[currentStoryIndex]?.routeStop || STORY[0].center)
+      .addTo(miniMap);
+    const bounds = new maplibregl.LngLatBounds();
+    pointFeatures.forEach((feature) => bounds.extend(feature.geometry.coordinates));
+    if (!bounds.isEmpty()) miniMap.fitBounds(bounds, { padding: 18, duration: 0 });
+    miniMapReady = true;
+    setMiniMapProgress(journeyProgress, exhibitionSeason);
+    updateExhibitionRail();
+  } catch (error) { console.warn('Mini-map data unavailable:', error); }
+});
+}
 
 
 
@@ -1212,6 +1328,375 @@ function bindStoryImages(
 
 
 // ============================================================
+// EXHIBITION INTERFACE
+// ============================================================
+
+const exhibitionUI = document.createElement('div');
+exhibitionUI.id = 'exhibition-ui';
+exhibitionUI.innerHTML = `
+  <header class="journey-identity">
+    <div class="identity-kicker">An individual journey · Western Himalaya</div>
+    <div id="journey-identity-location">Himachal Pradesh</div>
+    <h2 id="journey-identity-title">Gaddi pastoralist journey</h2>
+    <p id="journey-identity-subtitle">Across the seasons, between Bharmour, Darcha and Ispur.</p>
+    <button type="button" id="journey-back">← India overview</button>
+  </header>
+
+  <aside class="journey-rail" aria-label="Journey information">
+    <section class="narrative-panel">
+      <div class="narrative-control-row"><span class="rail-kicker">Location narrative</span><button type="button" id="audio-toggle" aria-label="Play narration">▶</button></div>
+      <div class="rail-story"><p id="journey-rail-text">The map is the story. Follow the route through the seasons.</p></div>
+      <div class="journey-actions">
+        <button type="button" id="journey-start" class="primary-action">Start journey</button>
+        <button type="button" id="journey-explore">Explore map</button>
+        <button type="button" id="journey-restart">Restart</button>
+      </div>
+      <div class="journey-audio-status"><span class="rail-kicker">Audio</span><span id="audio-status">Narration available</span></div>
+      <button type="button" id="conclusion-prompt" hidden>Continue beyond the route →</button>
+    </section>
+    <section class="mini-map-panel" aria-label="Route overview">
+      <div class="mini-map-heading"><span>Route atlas</span><span id="journey-percent">0%</span></div>
+      <div id="mini-map" aria-label="Mini-map showing both seasonal routes"></div>
+      <div class="elevation-heading"><span>Elevation profile</span><span id="journey-distance">Distance data available at route points</span></div>
+      <svg id="elevation-profile" viewBox="0 0 320 58" role="img" aria-label="Elevation profile"><path class="profile-fill"/><path class="profile-line"/><circle id="profile-position" cx="0" cy="52" r="4"/></svg>
+    </section>
+  </aside>
+
+  <section id="conclusion-screen" aria-hidden="true">
+    <div class="conclusion-image-wrap">
+      <img id="conclusion-portrait" alt="">
+      <p id="conclusion-caption"></p>
+    </div>
+    <div class="conclusion-copy">
+      <span class="identity-kicker">The journey · a closing reflection</span>
+      <h2 id="conclusion-title"></h2>
+      <p id="conclusion-subtitle"></p>
+      <div id="conclusion-narrative"></div>
+      <div class="conclusion-actions">
+        <button type="button" id="conclusion-return">Return to Ispur</button>
+        <button type="button" id="conclusion-restart">Restart journey</button>
+        <button type="button" id="conclusion-atlas">India overview</button>
+      </div>
+    </div>
+  </section>
+
+  <nav class="map-toolbox" aria-label="Map controls and scale">
+    <button type="button" id="map-north" aria-label="Reset north"><span id="north-glyph">N</span></button>
+    <div id="custom-scale-bar" aria-label="Map scale"><span>0</span><div class="custom-scale-line"><i></i></div><span id="custom-scale-distance">—</span></div>
+    <div class="map-actions">
+      <button type="button" id="map-zoom-in" aria-label="Zoom in">+</button>
+      <button type="button" id="map-zoom-out" aria-label="Zoom out">−</button>
+      <button type="button" id="legend-toggle" aria-expanded="false">Legend</button>
+    </div>
+  </nav>
+  <div class="placement-switch" hidden>
+    <label>Photograph placement <select id="photo-placement"><option value="screen">Screen anchored</option><option value="geographic">Geographic</option></select></label>
+  </div>
+`;
+document.body.appendChild(exhibitionUI);
+initializeMiniMap();
+
+function updateExhibitionRail() {
+  const chapter = STORY[currentStoryIndex];
+  if (!chapter) return;
+  const content = HIMACHAL_LOCATIONS[chapter.id] || {
+    name: chapter.location || '',
+    title: chapter.title || '',
+    subtitle: chapter.eyebrow || '',
+    narrative: chapter.text || ''
+  };
+  const chapterProgress = getStoryRouteProgress(chapter);
+  const progress = Number.isFinite(journeyProgress) ? journeyProgress : chapterProgress;
+  const chapterSeason = getChapterSeason(chapter);
+  exhibitionSeason = chapter.migrationPhase === 'autumn-return' || chapterSeason === 'winter' ? 'winter' : 'summer';
+  const location = document.querySelector('#journey-identity-location');
+  const text = document.querySelector('#journey-rail-text');
+  const identityTitle = document.querySelector('#journey-identity-title');
+  const identitySubtitle = document.querySelector('#journey-identity-subtitle');
+  const percent = document.querySelector('#journey-percent');
+  if (location) location.textContent = content.name || 'Himachal Pradesh';
+  if (identityTitle) identityTitle.textContent = content.title || 'Gaddi pastoralist journey';
+  if (identitySubtitle) identitySubtitle.textContent = content.subtitle || 'Across the seasons, between Bharmour, Darcha and Ispur.';
+  if (text) text.textContent = content.narrative || 'Follow the route through the seasons.';
+  const audioStatus = document.querySelector('#audio-status');
+  if (audioStatus) audioStatus.textContent = content.audio?.status || 'Narration available';
+  const audioToggle = document.querySelector('#audio-toggle');
+  if (audioToggle) {
+    audioToggle.dataset.playing = 'false';
+    audioToggle.textContent = '▶';
+  }
+  const conclusionPrompt = document.querySelector('#conclusion-prompt');
+  if (conclusionPrompt) conclusionPrompt.hidden = chapter.id !== 'ispur' || conclusionActive;
+  scheduleLocationReveal(chapter);
+  if (percent) percent.textContent = Number.isFinite(progress) ? `${Math.round(progress * 100)}% along route` : '—';
+  const profile = document.querySelector('#profile-position');
+  const continuousCoordinate = getRouteCoordinate(journeyProgress);
+  if (miniMapReady && miniPositionMarker && (continuousCoordinate || chapter.routeStop || chapter.center)) {
+    miniPositionMarker.setLngLat(continuousCoordinate || chapter.routeStop || chapter.center);
+  }
+  if (profile && Number.isFinite(progress)) {
+    profile.setAttribute('cx', String(Math.max(0, Math.min(320, progress * 320))));
+    const elevation = profileElevations.length ? profileElevations[Math.min(profileElevations.length - 1, Math.round(progress * (profileElevations.length - 1)))] : 0;
+    const minimum = profileElevations.length ? Math.min(...profileElevations) : 0;
+    const maximum = profileElevations.length ? Math.max(...profileElevations) : 1;
+    profile.setAttribute('cy', String(52 - Math.round(((elevation - minimum) / Math.max(1, maximum - minimum)) * 40)));
+  }
+}
+
+function renderElevationProfile() {
+  profileElevations = exhibitionPoints.map((feature) => Number(feature.properties?.elevation_)).filter(Number.isFinite);
+  if (!profileElevations.length) return;
+  const minimum = Math.min(...profileElevations);
+  const range = Math.max(1, Math.max(...profileElevations) - minimum);
+  const points = profileElevations.map((value, index) => `${(index / Math.max(1, profileElevations.length - 1)) * 320},${52 - ((value - minimum) / range) * 40}`);
+  document.querySelector('#elevation-profile .profile-line')?.setAttribute('d', `M${points.join(' L')}`);
+  document.querySelector('#elevation-profile .profile-fill')?.setAttribute('d', `M${points.join(' L')} L320 58 L0 58 Z`);
+  const distance = document.querySelector('#journey-distance');
+  if (distance) distance.textContent = `${Math.round(minimum).toLocaleString()}–${Math.round(Math.max(...profileElevations)).toLocaleString()} m recorded`;
+}
+
+document.querySelector('#journey-start').addEventListener('click', () => {
+  exhibitionMode = 'guided';
+  if (atlasMode) {
+    const caseStudy = CASE_STUDIES.find((item) => item.active) || CASE_STUDIES[0];
+    if (caseStudy) enterStateCaseStudy(caseStudy);
+  } else if (currentStoryIndex !== 1) goToChapter(1);
+});
+document.querySelector('#journey-explore').addEventListener('click', () => {
+  exhibitionMode = exhibitionMode === 'explore' ? 'guided' : 'explore';
+  document.querySelector('#journey-explore').textContent = exhibitionMode === 'explore' ? 'Return to guided' : 'Explore map';
+  exhibitionMode === 'explore' ? enableMapInteraction() : disableMapInteraction();
+  document.body.classList.toggle('exploration-mode', exhibitionMode === 'explore');
+});
+document.querySelector('#journey-restart').addEventListener('click', () => {
+  if (!atlasMode && currentStoryIndex !== 1) goToChapter(1);
+});
+document.querySelector('#journey-back').addEventListener('click', returnToAtlas);
+document.querySelector('#conclusion-prompt').addEventListener('click', openConclusion);
+document.querySelector('#map-zoom-in').addEventListener('click', () => map.zoomIn({ duration: 500 }));
+document.querySelector('#map-zoom-out').addEventListener('click', () => map.zoomOut({ duration: 500 }));
+document.querySelector('#map-north').addEventListener('click', () => map.easeTo({ bearing: 0, duration: 700 }));
+document.querySelector('#legend-toggle').addEventListener('click', (event) => {
+  const open = !legend.classList.contains('visible');
+  legend.classList.toggle('visible', open);
+  event.currentTarget.setAttribute('aria-expanded', String(open));
+});
+document.querySelector('#audio-toggle').addEventListener('click', (event) => {
+  const playing = event.currentTarget.dataset.playing === 'true';
+  event.currentTarget.dataset.playing = String(!playing);
+  event.currentTarget.textContent = playing ? '▶' : 'Ⅱ';
+  document.querySelector('#audio-status').textContent = playing ? 'Placeholder narration' : 'Narration placeholder · no audio file';
+});
+
+function haversineDistance(first, second) {
+  const earthRadius = 6371008.8;
+  const toRadians = (value) => value * Math.PI / 180;
+  const latitudeDelta = toRadians(second.lat - first.lat);
+  const longitudeDelta = toRadians(second.lng - first.lng);
+  const latitudeOne = toRadians(first.lat);
+  const latitudeTwo = toRadians(second.lat);
+  const value = Math.sin(latitudeDelta / 2) ** 2
+    + Math.cos(latitudeOne) * Math.cos(latitudeTwo) * Math.sin(longitudeDelta / 2) ** 2;
+  return earthRadius * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+}
+
+function readableScaleDistance(distance) {
+  const exponent = 10 ** Math.floor(Math.log10(Math.max(1, distance)));
+  const normalized = distance / exponent;
+  const step = normalized >= 5 ? 5 : normalized >= 2 ? 2 : 1;
+  return step * exponent;
+}
+
+function formatScaleDistance(distance) {
+  return distance >= 1000
+    ? `${distance / 1000 >= 10 ? Math.round(distance / 1000) : (distance / 1000).toFixed(1)} km`
+    : `${Math.round(distance)} m`;
+}
+
+function updateCustomScaleBar() {
+  const scale = document.querySelector('#custom-scale-bar');
+  const line = scale?.querySelector('.custom-scale-line');
+  const label = document.querySelector('#custom-scale-distance');
+  if (!scale || !line || !label || !map.loaded()) return;
+  const bounds = map.getContainer().getBoundingClientRect();
+  const sampleWidth = 160;
+  const sampleY = bounds.height * 0.68;
+  const sampleX = Math.max(20, bounds.width / 2 - sampleWidth / 2);
+  const first = map.unproject([sampleX, sampleY]);
+  const second = map.unproject([sampleX + sampleWidth, sampleY]);
+  const visibleDistance = haversineDistance(first, second);
+  const displayedDistance = readableScaleDistance(visibleDistance);
+  const lineWidth = Math.max(72, Math.min(sampleWidth, sampleWidth * displayedDistance / visibleDistance));
+  line.style.width = `${lineWidth}px`;
+  label.textContent = formatScaleDistance(displayedDistance);
+  const north = document.querySelector('#north-glyph');
+  if (north) north.style.transform = `rotate(${-map.getBearing()}deg)`;
+}
+
+map.on('load', updateCustomScaleBar);
+map.on('move', updateCustomScaleBar);
+map.on('resize', updateCustomScaleBar);
+
+const floatingPhoto = document.createElement('button');
+floatingPhoto.id = 'floating-photo';
+floatingPhoto.type = 'button';
+floatingPhoto.innerHTML = '<img alt=""><span class="floating-caption"></span><i aria-hidden="true">×</i>';
+document.body.appendChild(floatingPhoto);
+let floatingPhotoChapter = null;
+let floatingPhotoImages = [];
+let floatingPhotoIndex = 0;
+function updateFloatingPhoto(chapter) {
+  floatingPhotoChapter = chapter;
+  floatingPhotoImages = (HIMACHAL_LOCATIONS[chapter?.id]?.images || [])
+    .map((image) => ({ ...image, alt: chapter.location || 'Story photograph' }));
+  if (!floatingPhotoImages.length && chapter?.image) {
+    floatingPhotoImages = [{ src: chapter.image, alt: chapter.location || 'Story photograph' }];
+  }
+  floatingPhotoIndex = 0;
+  const source = floatingPhotoImages[0]?.src;
+  floatingPhoto.classList.toggle('visible', Boolean(source));
+  if (!source) return;
+  floatingPhoto.querySelector('img').src = source;
+  floatingPhoto.querySelector('img').alt = chapter.location || 'Story photograph';
+  floatingPhoto.querySelector('.floating-caption').textContent = floatingPhotoImages[0].caption || `${chapter.location} · photograph`;
+  positionFloatingPhoto();
+}
+function showFloatingPhotoImage(index, token = revealToken) {
+  if (!floatingPhotoImages[index]) return;
+  floatingPhotoIndex = index;
+  floatingPhoto.classList.remove('visible');
+  setTimeout(() => {
+    if (token !== revealToken || !floatingPhotoImages[index]) return;
+    floatingPhoto.querySelector('img').src = floatingPhotoImages[index].src;
+    floatingPhoto.querySelector('.floating-caption').textContent = floatingPhotoImages[index].caption || `${floatingPhotoChapter.location} · photograph`;
+    floatingPhoto.classList.add('visible');
+  }, 90);
+}
+function positionFloatingPhoto() {
+  if (!floatingPhotoChapter || document.querySelector('#photo-placement')?.value !== 'geographic') return;
+  const point = floatingPhotoChapter.routeStop || floatingPhotoChapter.center;
+  const screenPoint = map.project(point);
+  floatingPhoto.style.left = `${Math.max(16, Math.min(window.innerWidth - 210, screenPoint.x + 18))}px`;
+  floatingPhoto.style.top = `${Math.max(80, Math.min(window.innerHeight - 150, screenPoint.y - 70))}px`;
+}
+floatingPhoto.addEventListener('click', () => {
+  if (floatingPhotoChapter && floatingPhotoImages.length) openImageViewer(floatingPhotoImages, floatingPhotoIndex);
+});
+floatingPhoto.querySelector('i').addEventListener('click', (event) => { event.stopPropagation(); floatingPhoto.classList.remove('visible'); });
+floatingPhoto.addEventListener('pointermove', (event) => {
+  if (event.pointerType === 'touch') return;
+  const bounds = floatingPhoto.getBoundingClientRect();
+  const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+  const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+  floatingPhoto.style.setProperty('--photo-x', `${x * 8}px`);
+  floatingPhoto.style.setProperty('--photo-y', `${y * 6}px`);
+  floatingPhoto.style.setProperty('--photo-tilt-x', `${y * -2.2}deg`);
+  floatingPhoto.style.setProperty('--photo-tilt-y', `${x * 2.2}deg`);
+});
+floatingPhoto.addEventListener('pointerleave', () => {
+  floatingPhoto.style.setProperty('--photo-x', '0px');
+  floatingPhoto.style.setProperty('--photo-y', '0px');
+  floatingPhoto.style.setProperty('--photo-tilt-x', '0deg');
+  floatingPhoto.style.setProperty('--photo-tilt-y', '0deg');
+});
+map.on('move', positionFloatingPhoto);
+document.querySelector('#photo-placement').addEventListener('change', positionFloatingPhoto);
+if (new URLSearchParams(window.location.search).has('composer') || new URLSearchParams(window.location.search).has('placement')) {
+  document.querySelector('.placement-switch').hidden = false;
+}
+
+let revealToken = 0;
+let revealedLocationId = null;
+let revealTimers = [];
+function cancelLocationReveal() {
+  revealToken += 1;
+  revealedLocationId = null;
+  revealTimers.forEach((timer) => clearTimeout(timer));
+  revealTimers = [];
+  document.querySelector('.journey-rail')?.classList.remove('arrival-reveal');
+  document.querySelector('.journey-rail')?.classList.add('content-leaving');
+  document.querySelector('.narrative-panel')?.classList.remove('arrival-reveal');
+  document.querySelector('.narrative-panel')?.classList.add('content-leaving');
+  document.querySelector('.journey-identity')?.classList.add('content-leaving');
+  floatingPhoto.classList.remove('visible');
+}
+function scheduleLocationReveal(chapter) {
+  if (!chapter || chapter.id === revealedLocationId) return;
+  revealedLocationId = chapter.id;
+  const token = revealToken;
+  updateFloatingPhoto(chapter);
+  floatingPhoto.classList.remove('visible');
+  const rail = document.querySelector('.journey-rail');
+  const narrativePanel = document.querySelector('.narrative-panel');
+  const identity = document.querySelector('.journey-identity');
+  rail?.classList.remove('arrival-reveal');
+  rail?.classList.remove('content-leaving');
+  narrativePanel?.classList.remove('content-leaving');
+  narrativePanel?.classList.remove('arrival-reveal');
+  identity?.classList.remove('content-leaving');
+  requestAnimationFrame(() => {
+    narrativePanel?.classList.add('arrival-reveal');
+    identity?.classList.add('arrival-reveal');
+  });
+  const content = HIMACHAL_LOCATIONS[chapter.id];
+  const images = content?.images || [];
+  images.slice(1).forEach((_, index) => {
+    revealTimers.push(setTimeout(() => {
+      if (token === revealToken) showFloatingPhotoImage(index + 1, token);
+    }, 1500 + index * 520));
+  });
+  if (content?.images?.length || chapter.image) {
+    revealTimers.push(setTimeout(() => {
+      if (token === revealToken) {
+        updateFloatingPhoto(chapter);
+        floatingPhoto.classList.add('visible');
+      }
+    }, 920));
+  }
+}
+
+function renderConclusion() {
+  const content = HIMACHAL_CONCLUSION;
+  document.querySelector('#conclusion-portrait').src = content.portrait.src;
+  document.querySelector('#conclusion-portrait').alt = content.portrait.alt;
+  document.querySelector('#conclusion-caption').textContent = `${content.portrait.caption} ${content.portrait.credit}`;
+  document.querySelector('#conclusion-title').textContent = content.title;
+  document.querySelector('#conclusion-subtitle').textContent = content.subtitle;
+  document.querySelector('#conclusion-narrative').textContent = content.narrative;
+}
+
+function openConclusion() {
+  if (conclusionActive || STORY[currentStoryIndex]?.id !== 'ispur' || cameraAnimating) return;
+  conclusionActive = true;
+  cancelLocationReveal();
+  renderConclusion();
+  document.querySelector('#conclusion-prompt').hidden = true;
+  document.body.classList.add('conclusion-active');
+  document.querySelector('#conclusion-screen').setAttribute('aria-hidden', 'false');
+  disableMapInteraction();
+}
+
+function closeConclusion() {
+  conclusionActive = false;
+  document.body.classList.remove('conclusion-active');
+  document.querySelector('#conclusion-screen').setAttribute('aria-hidden', 'true');
+  enableMapInteraction();
+}
+
+document.querySelector('#conclusion-return').addEventListener('click', () => {
+  closeConclusion();
+  updateStoryPanel();
+});
+document.querySelector('#conclusion-restart').addEventListener('click', () => {
+  closeConclusion();
+  if (currentStoryIndex !== 1) goToChapter(1);
+});
+document.querySelector('#conclusion-atlas').addEventListener('click', () => {
+  closeConclusion();
+  returnToAtlas();
+});
+
+// ============================================================
 // LEGEND
 // ============================================================
 
@@ -1600,7 +2085,9 @@ dialogueToggle.addEventListener(
 // STORY PANEL UPDATE
 // ============================================================
 
+let storyRenderToken = 0;
 function updateStoryPanel() {
+  const renderToken = ++storyRenderToken;
 
   const chapter =
     STORY[
@@ -1615,6 +2102,7 @@ function updateStoryPanel() {
 
   setTimeout(
     () => {
+      if (renderToken !== storyRenderToken) return;
 
       eyebrowElement.textContent =
         chapter.eyebrow || '';
@@ -1660,6 +2148,7 @@ function updateStoryPanel() {
 
       updateSeasonIndicator();
       updateElevationMeter(chapter);
+      updateExhibitionRail();
 
 
       // ======================================================
@@ -1862,6 +2351,34 @@ function getSeasonRouteColor(
     || SEASON_COLORS.summer;
 }
 
+function setMiniMapProgress(progress, season = 'summer') {
+  if (!miniMapReady || !miniMap) return;
+  const currentCoordinate = getRouteCoordinate(progress);
+  const activeSeason = season === 'summer' ? 'summer' : 'winter';
+  const routeProgress = progressOnMiniRoute(currentCoordinate, miniRouteMetrics[activeSeason]);
+  const p = Math.max(0, Math.min(1, Number.isFinite(routeProgress) ? routeProgress : Number(progress) || 0));
+  const activeLayer = activeSeason === 'winter' ? 'mini-winter-travel' : 'mini-summer-travel';
+  const inactiveLayer = activeSeason === 'winter' ? 'mini-summer-travel' : 'mini-winter-travel';
+  const color = getSeasonRouteColor(activeSeason);
+  if (p <= 0) {
+    if (miniMap.getLayer(activeLayer)) miniMap.setPaintProperty(activeLayer, 'line-opacity', 0);
+    return;
+  }
+  if (miniMap.getLayer(activeLayer)) miniMap.setPaintProperty(activeLayer, 'line-opacity', 1);
+  const gradient = p >= 0.999
+    ? ['interpolate', ['linear'], ['line-progress'], 0, color, 1, color]
+    : [
+        'interpolate', ['linear'], ['line-progress'],
+        0, 'rgba(0,0,0,0)',
+        Math.max(0, p - 0.002), 'rgba(0,0,0,0)',
+        p, color,
+        Math.min(1, p + 0.002), 'rgba(0,0,0,0)',
+        1, 'rgba(0,0,0,0)'
+      ];
+  if (miniMap.getLayer(activeLayer)) miniMap.setPaintProperty(activeLayer, 'line-gradient', gradient);
+  if (miniMap.getLayer(inactiveLayer)) miniMap.setPaintProperty(inactiveLayer, 'line-gradient', ['interpolate', ['linear'], ['line-progress'], 0, 'rgba(0,0,0,0)', 1, 'rgba(0,0,0,0)']);
+}
+
 function setRouteProgressPaint(
   progress,
   season = 'summer'
@@ -1869,6 +2386,7 @@ function setRouteProgressPaint(
 
   const routeColor =
     getSeasonRouteColor(season);
+  setMiniMapProgress(progress, season);
 
   const visibleProgress =
     Math.max(
@@ -1993,6 +2511,7 @@ function setAutumnRouteProgressPaint(
 
   const p = Math.max(0, Math.min(1, progress));
   const routeColor = getSeasonRouteColor(season);
+  setMiniMapProgress(p, season);
 
   // Keep the gradient stops strictly increasing.
   const start = Math.max(0, p - 0.001);
@@ -2062,7 +2581,7 @@ function updateRouteProgress(
 
   }
 
-  const startProgress = flockProgress;
+  const startProgress = journeyProgress;
   const isAutumnReturn =
   options.migrationPhase === 'autumn-return';
   flockTravelDirection = isAutumnReturn ? -1 : 1;
@@ -2091,7 +2610,7 @@ function updateRouteProgress(
   setRouteProgressPaint(value, season);
 }
 
-flockProgress = value;
+journeyProgress = value;
 updateFlockPosition(value);
 
       if (elapsed < 1) {
@@ -2115,7 +2634,7 @@ updateFlockPosition(value);
       p,
       season
     );
-    flockProgress = p;
+    journeyProgress = p;
     updateFlockPosition(p);
     return;
   }
@@ -2126,7 +2645,7 @@ updateFlockPosition(value);
     season
   );
 
-  flockProgress = p;
+  journeyProgress = p;
   updateFlockPosition(p);
 
   if (
@@ -2348,12 +2867,8 @@ function updateFlockPosition(
   progress
 ) {
 
-  if (
-    !flockMarker
-  ) {
-
+  if (!flockMarker && !miniPositionMarker) {
     return;
-
   }
 
   const markerProgress = Math.max(
@@ -2373,14 +2888,11 @@ function updateFlockPosition(
     coordinate
   ) {
 
-    flockMarker.setOffset(
-      [
-        0,
-        0
-      ]
-    );
-
-    flockMarker.setLngLat(coordinate);
+    if (flockMarker) {
+      flockMarker.setOffset([0, 0]);
+      flockMarker.setLngLat(coordinate);
+    }
+    if (miniMapReady && miniPositionMarker) miniPositionMarker.setLngLat(coordinate);
 
   }
 
@@ -3240,7 +3752,6 @@ function updateMapVisibility() {
       }
     );
 
-
   if (
     templeMarker
   ) {
@@ -3968,7 +4479,7 @@ async function enterStateCaseStudy(caseStudy) {
     currentStoryIndex =
       0;
 
-    flockProgress = routeStartProgress;
+    journeyProgress = routeStartProgress;
     updateFlockPosition(routeStartProgress);
 
 
@@ -4131,11 +4642,12 @@ async function returnToAtlas() {
     activeStoryId = 'himachal';
     activeSeasonCycle = SEASON_CYCLES.himachal;
     activeElevationRange = ELEVATION_RANGES.himachal;
+    journeyProgress = routeStartProgress;
+    cancelLocationReveal();
     updateProgressStopsForStory();
     updateSeasonIndicator();
     updateElevationMeter(STORY[0]);
 
-    flockProgress = routeStartProgress;
     updateFlockPosition(routeStartProgress);
 
 
@@ -4228,6 +4740,8 @@ async function goToChapter(
     STORY[
       destinationIndex
     ];
+
+  cancelLocationReveal();
 
 
   cameraAnimating =
@@ -4717,7 +5231,6 @@ map.on(
         }
 
       );
-
 
       // ======================================================
       // ROUTE BASE

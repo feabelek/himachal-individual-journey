@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Herder portrait placeholder</title>
+  <desc id="desc">Portrait photograph to be supplied.</desc>
+  <rect width="900" height="1200" fill="#242b25"/>
+  <path d="M0 840 230 680l150 90 180-230 340 300v360H0z" fill="#394637"/>
+  <circle cx="450" cy="410" r="150" fill="#817258" opacity=".8"/>
+  <path d="M225 1040c20-230 115-350 225-350s205 120 225 350" fill="#171b17" opacity=".9"/>
+  <text x="450" y="1100" text-anchor="middle" fill="#e8d19a" font-family="Arial, sans-serif" font-size="28" letter-spacing="3">PORTRAIT TO BE SUPPLIED</text>
+</svg>

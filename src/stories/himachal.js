@@ -195,12 +195,16 @@ export const STORY = [
   {
     id: 'bharmour',
     eyebrow: 'Home Village',
-    title: 'Preparing for the climb',
-    location: 'Bharmour',
-    text: `Our journey follows Mohanlal, a shepherd from Bharmour, for whom returning to Bharmour is both a pause
-     and a flurry of activity before the long climb to the summer
-      pastures. The flock is sheared, supplies are gathered,
-      and the animals are prepared for the migration ahead.`,
+    title: 'Where the Year Turns',
+    location: 'Bharmour, late April into May',
+    text: `“This is where the year turns.
+    Houses here were built the old way, wood and stone, with terraced fields right up against them.
+    We go up to the alpine meadows and come back down in time to harvest. From here it is about a hundred kilometres up to Darcha.
+“Before we leave, we stock up on food supplies, bags of salt for the flock, which helps their digestion, and camping equipment.
+“Every animal also goes through the dipping site.
+Dipping means each sheep and goat is washed in a medicated solution.
+We never skip it, because one sickness on the high ground can undo a whole season.”
+`,
     detail: `Before departure, the sheep and goats are taken to the
       village dipping site and washed in a medicated solution
       to help protect the herd during the months of migration.`,
@@ -221,20 +225,21 @@ export const STORY = [
 {
   id: 'hadsar',
 
-  eyebrow: 'Summer Migration · The Ascent',
+  eyebrow: 'Halt Location',
 
-  title: 'The journey into the mountains begins',
+  title: 'Who Walks With The Flock?',
 
-  location: 'Hadsar',
+  location: 'Hadsar, on the way up',
 
-  text: `Leaving Bharmour, Mohanlal and his flock begin
-    their ascent towards the summer grazing grounds.
-    Hadsar marks an early halt along the journey
-    through the mountainous landscape.`,
+  text: `“A puhal is a man hired to herd someone’s flock,
+  and one PUHAL can manage about a hundred animals.
+  With my two hundred, I herd alongside one I hire.
+  These days he’s as likely to have come up from Bihar
+  looking for work as to be a local.
+  Our own young men want nothing to do with it anymore,
+  the hours are long and the pay is thin against a wage in town.””`,
 
-  detail: `The journey continues through the valleys
-    and mountain routes leading towards Kugti
-    and the higher summer pastures.`,
+  detail: `”`,
 
   center: [
   76.618179,
@@ -266,25 +271,19 @@ bearing: 161.45,
 //KUGTI
   {
     id: 'kugti',
-    eyebrow: 'Wildlife and Conservation',
-    title: 'Co-existence',
-    location: 'Kugti',
-    text: `As Mohanlal and his flock move towards Kugti,
-  they enter a landscape of forests, alpine meadows,
-  and rugged mountain slopes.
+    eyebrow: 'Wildlife Sanctuary',
+    title: 'Through the Sanctuary',
+    location: 'Kugti, inside the Sanctuary Boundary',
+    text: `“From here the path runs through a wildlife sanctuary.
+    But predators take animals here more often than they used to,
+    because towns and farmland keep pushing wildlife closer to our paths.
+    Losing a sheep is part of life up here.
+    Animals are worth more now, and there’s meant to be compensation,
+    but the claim is so complicated that most men don’t bother.”
+`,
+    detail: `.
 
-  This region is part of the Kugti Wildlife Sanctuary,
-  a protected landscape that provides habitat for
-  Himalayan wildlife alongside the seasonal grazing
-  routes used by pastoral communities.`,
-    detail: `The mountains surrounding Kugti support a
-  diversity of wildlife, including species adapted
-  to the challenging conditions of the Western Himalaya.
-
-  Here, pastoral movement and wildlife conservation
-  intersect, raising important questions about how
-  traditional grazing practices, biodiversity,
-  and protected-areas coexist.`,
+  `,
     center: [
   76.696903,
   32.470653
@@ -307,12 +306,12 @@ bearing: -59.46,
   {
     id: 'kartik-swami-temple',
     eyebrow: 'Cultural Site',
-    title: 'A pause along the route',
+    title: 'A Sheep for the Mountain',
     location: 'Kartik Swami Temple',
-    text: `Along Mohanlal’s route, the Kartik Swami Temple stands as both a spiritual stop and a cultural anchor.
-      Here, animal sacrifices, prayers, and seasonal festivals
-      like Lohri ki Sankranti and Veeru ki Sankranti mark an important moment in the
-      pastoralists’ annual migration cycle.
+    text: `Kartik Swami is a temple, also a religious site where offerings are made
+    for the safety of the flock and the road ahead. I give a sheep here, the way my father did.
+     It’s planned into the journey like any crossing, permission asked before we go further.”
+
 .`,
     detail: '',
     center: [76.733215, 32.478799],
@@ -332,30 +331,21 @@ bearing: -59.46,
   {
   id: 'kugti-jot',
 
-  eyebrow: 'High Mountain Crossing',
+  eyebrow: 'High Mountain Pass',
 
-  title: 'Across the mountain pass',
+  title: 'The Real Reckoning',
 
-  location: 'Kugti Jot',
+  location: 'Kugti Pass',
 
-  text: `Beyond Kugti, Mohanlal and his flock approach
-    Kugti Jot, a high-altitude mountain pass that
-    connects the valleys of Chamba and Lahaul.
+  text: `“Here’s the real reckoning. Forty-eight hundred metres,
+  linking the valleys of the river Ravi and the river Chenab.
+  “We move before the sun can soften the snow,
+  because once it does the animals sink in and the footing turns against you.
+  Once you start, you go over and down in one push and rest only below the snowline.
+Coming down the far side, with the glaciers and valley opening below,
+is the one moment all year that feels like relief.”`,
 
-    The ascent takes them through increasingly
-    rugged terrain, where steep slopes, exposed
-    mountain paths, and unpredictable weather
-    make the crossing particularly challenging.`,
-
-  detail: `At nearly 5,000 metres above sea level,
-    Kugti Jot marks one of the most demanding
-    sections of the summer migration.
-
-    Crossing the pass allows the flock to continue
-    towards the grazing grounds of Lahaul,
-    illustrating how pastoral migration connects
-    landscapes separated by formidable
-    mountain barriers.`,
+  detail: ``,
 
   center: [
   76.831513,
@@ -385,16 +375,13 @@ bearing: -101.59,
 // TANDI
   {
     id: 'tandi',
-    eyebrow: 'Ecological Transition',
-    title: 'The landscape opens',
+    eyebrow: 'River Confluence',
+    title: 'Where the Rivers Meet',
     location: 'Tandi',
-    text: `Beyond the alpine meadows, the migration enters the
-      higher elevations of Lahaul. The landscape becomes
-      increasingly open and sparse, with grasses, herbs,
-      stunted blue pines and low shrubs across the slopes.`,
-    detail: `Tandi, at the confluence of the Chandra and Bhaga rivers forming the Chenab,
-      has historically been an important tri-junction on the migration route connecting Leh, Killar, and Kaza.
-      The gentle slopes here give Mohanlal and his flock a chance to rest and graze before the final journey into the higher summer pastures
+    text: `Tandi is where the Chandra and Bhaga meet to form the Chenab,
+    an old junction where the routes toward Leh, Killar and Kaza meet,
+    and herders have used them to migrate for generations.`,
+    detail: `
     `,
     center: [76.983644, 32.557597],
     zoom: 13.2,
@@ -411,17 +398,16 @@ bearing: -101.59,
   //DARCHA
   {
     id: 'darcha',
-    eyebrow: 'Summer Grazing Grounds',
-    title: 'Arrival in the high pastures',
-    location: 'Darcha',
-    text: `At last, Mohanlal reaches the wide valleys of the
-      high-altitude summer pastures. The broad basins allow the
-      flock to spread out and graze while the shepherd rests,
-      repairs equipment and prepares for the weeks ahead.`,
-    detail: `From June to August, the flock grazes these alpine
-      meadows. It is also lambing season, when Mohanlal tends
-      to newborn animals while making the most of the rich
-      summer pastures.`,
+    eyebrow: 'Alpine Summer Pastures',
+    title: 'What the Climb Was For',
+    location: 'Darcha, the summer grounds',
+    text: `“This is what the whole climb has been for. Broad open basins,
+    June through September, and lambing time too.
+    This is dhar, the customary grazing ground of the alpine summer pastures.
+    Each stretch belongs to a family, passed down like a field,
+    and a man without land up here rents it from one who has it.
+    Nothing is written, but it holds. `,
+    detail: ``,
     center: [77.198028, 32.671213],
     zoom: 13.5,
     pitch: 52,
@@ -440,12 +426,10 @@ bearing: -101.59,
     season: 'summer',
     eyebrow: 'The Migration · Summer Route',
     title: 'A journey across landscapes',
-    location: 'Bharmour → Darcha',
-    text: `After the summer grazing, the route can be seen at
-      the scale of the whole mountain journey before the story
-      begins its return toward the winter pastures.`,
-    detail: `The overview holds the summer route in view while
-      the flock prepares to retrace the path.`,
+    location: '',
+    text: `“When we turn back, in late September or early October,
+    we stop only a night or two at a time until Hadsar.”`,
+    detail: ``,
     center: [76.923171, 32.542367],
     zoom: 10.042,
     pitch: 30.5,
@@ -459,15 +443,11 @@ bearing: -101.59,
   {
     id: 'hadsar-autumn',
     migrationPhase: 'autumn-return',
-    eyebrow: 'Autumn Return · Retracing the Route',
-    title: 'Back through Hadsar',
-    location: 'Hadsar',
-    text: `As summer draws to a close, the shepherds begin
-      their return from the high-altitude grazing grounds
-      of Lahaul. The route is familiar, but the flock and
-      the landscape are moving into a different season.`,
-    detail: `From Hadsar onward, the story turns toward the
-      winter migration and the lower valleys.`,
+    eyebrow: 'Halt and Shearing',
+    title: 'Coming Down',
+    location: 'Hadsar, October',
+    text: `“This is where the second shearing of the year happens, after the monsoon and right after the descent."`,
+    detail: ``,
     center: [76.61323, 32.450849],
     zoom: 14.119,
     pitch: 54.5,
@@ -475,17 +455,22 @@ bearing: -101.59,
     routeStop: [76.61125696114797, 32.4548878877319],
     showLegend: true
   },
+  //-------------------------
+  // GADDERAN BELT
+  //-------------------------
   {
     id: 'gadderan-belt',
     migrationPhase: 'autumn-return',
-    eyebrow: 'Winter Migration · Gadderan Belt',
-    title: 'A belt of villages and passage',
-    location: 'Gadderan Belt · Bharmour · Holi · Deol',
-    text: `At Deol, the flock pauses within the wider Gadderan
-      Belt, a connected landscape that brings Bharmour, Holi,
-      and Deol into the winter return route.`,
-    detail: `The marker rests at Deol, while the camera opens out
-      to show the three places together as one connected belt.`,
+    eyebrow: 'Home Village Belt',
+    title: 'Home, and the Old Man in Deol',
+    location: 'Bharmour, Holi and Deol, early November',
+    text: `“We come down to Bharmour in October, in time to harvest the crop,
+    and then we turn toward winter ground, through Deol and Holi, before the climb to Jalsu.”
+“There’s an old man in Deol I always sit with, well past seventy, a lifetime of flocks behind him.
+Every year I ask him which part of this life is the hardest. He says people have it wrong.
+ ‘It isn’t the passes,’ he tells me. ‘It’s winter.’
+`,
+    detail: ``,
     center: [76.50124, 32.398823],
     zoom: 11.823,
     pitch: 49,
@@ -493,18 +478,20 @@ bearing: -101.59,
     routeStop: [76.5871364, 32.3045906],
     showLegend: true
   },
+  //-------------------------
+  //JALSU PASS
+  //-------------------------
   {
     id: 'jalsu-pass',
     migrationPhase: 'autumn-return',
-    eyebrow: 'Winter Migration · High Crossing',
-    title: 'Jalsu Pass',
-    location: 'Jalsu Pass',
-    text: `The return continues through Jalsu Pass, where the
-      flock crosses another high section before descending
-      toward the winter routes.`,
-    detail: `The pass is both a physical crossing and a seasonal
-      threshold between the higher summer landscape and the
-      lower winter journey.`,
+    eyebrow: 'Mountain Pass ',
+    title: 'Before the Passes Close',
+    location: 'Jalsu Pass, Over the Top and Down',
+    text: `“From the home belt we drop to the Ravi, then climb to Jalsu, a pass at thirty-four hundred metres.
+    From the top the long descent into the Kangra plains begins.
+     We have to be across by mid-October, before the passes close for the season,
+     and the date depends on when the first snow falls, usually late October or early November.`,
+    detail: ``,
     center: [76.682568, 32.204868],
     zoom: 13.105,
     pitch: 64.5,
@@ -512,17 +499,18 @@ bearing: -101.59,
     routeStop: [76.68357, 32.184],
     showLegend: true
   },
+  //-------------------------
+  //SOKHRU-GALUA-TIKKAR
+  //-------------------------
   {
     id: 'sokhru-galua-tikkar',
     migrationPhase: 'autumn-return',
-    eyebrow: 'Winter Migration · Trade Markets',
-    title: 'Routes of exchange',
-    location: 'Sokhru · Galua Tikkar',
-    text: `Sokhru and Galua Tikkar form one narrative of trade
-      markets, where pastoral movement meets the exchange of
-      wool, animals, provisions, and news.`,
-    detail: `The flock stops at Galua Tikkar, while the camera
-      holds both locations in the same field of view.`,
+    eyebrow: 'Animal Trade Markets',
+    title: 'Where the Sheep are Sold',
+    location: 'Sokhru and Galua Tikkar',
+    text: `“This is where I traded my sheep. We halt nearer the road,
+    and a vendor walks over to the flock and we settle a price. Grown males are sold, females kept back for next year.`,
+    detail: ``,
     center: [76.626734, 32.10866],
     zoom: 13.595,
     pitch: 68,
@@ -530,17 +518,22 @@ bearing: -101.59,
     routeStop: [76.61249719132908, 32.10622440376333],
     showLegend: true
   },
+  //-------------------------
+  //SULLAH-DHEERAL-THURAL
+  //-------------------------
   {
     id: 'sullah-dheeral-thural',
     migrationPhase: 'autumn-return',
-    eyebrow: 'Winter Migration · Transit Stops',
-    title: 'A short passage through the lowlands',
-    location: 'Sullah · Dheeral · Thural',
-    text: `Sullah, Dheeral, and Thural are brief transit stops
-      along the lower route. Together they describe the small
-      pauses that carry the flock toward the plains.`,
-    detail: `The flock marker stops at Thural, while the camera
-      gathers all three places into one view.`,
+    eyebrow: 'Transit Halts',
+    title: 'A Night, Maybe Two',
+    location: 'Sullah, Dheeral and Thural',
+    text: `“Short stops, a day or so each, and never picked fresh.
+     There’s a word for it, padav, a halting place my family and others have used for generations.
+      Whether we stay one night or two depends on grass, water,
+      and whether the flock can be held safely till morning.
+      Theft worries me more here than it used to.
+      Animals are taken in real numbers, which keeps us moving.”`,
+    detail: ``,
     center: [76.440984, 32.005587],
     zoom: 12.48,
     pitch: 22.48,
@@ -548,16 +541,19 @@ bearing: -101.59,
     routeStop: [76.44270766632877, 31.94162869120387],
     showLegend: true
   },
+  //-------------------------
+  // DEHRA GOPIPUR
+  //-------------------------
   {
     id: 'dehra-gopipur',
     migrationPhase: 'autumn-return',
-    eyebrow: 'Winter Migration · River Crossing',
-    title: 'Crossing the river',
-    location: 'Dehra Gopipur',
-    text: `At Dehra Gopipur, the route reaches a river crossing.
-      The flock moves through one focused point in the winter
-      journey before continuing toward the lower valleys.`,
-    detail: `A single stop, but an important change in the route.`,
+    eyebrow: 'River Crossing',
+    title: 'Crossing the Water',
+    location: 'Dehra Gopipur, by the river',
+    text: `Up in the high mountains a crossing is tough.
+    The water is cold, the current has real force, and there are very few places to cross.
+    The Beas in Kangra runs wide and green between open banks, and with modern infrastructure the movement is a bit easier." `,
+    detail: ``,
     center: [76.218881, 31.879169],
     zoom: 14.698,
     pitch: 68,
@@ -568,14 +564,11 @@ bearing: -101.59,
   {
     id: 'ambota-shiv-bari',
     migrationPhase: 'autumn-return',
-    eyebrow: 'Winter Migration · Final Approach',
-    title: 'Toward the winter destination',
-    location: 'Ambota · Shiv Bari',
-    text: `Ambota and Shiv Bari belong to the final approach of
-      the winter migration, when the flock has left the high
-      country far behind.`,
-    detail: `The marker rests at Shiv Bari while the camera holds
-      both points together as one narrative stop.`,
+    eyebrow: 'Urban Areas and Roads',
+    title: 'Where the Country Stops Feeling Ours',
+    location: 'Ambota and Shiv Bari',
+    text: `“This is where the country stops feeling ours. Roads have widened and tourist traffic moves through at a pace this path was never built for. There’s some use in it, a veterinary stop, a working market, but there’s a cost too. My brother-in-law faces more of that than I do. He tells me about the stray dogs, more than there used to be, drawn by what a tourist season leaves behind, and bold enough now to go after a flock left unguarded even briefly."`,
+    detail: ``,
     center: [76.071902, 31.655893],
     zoom: 13.9,
     pitch: 47.95,
@@ -586,14 +579,17 @@ bearing: -101.59,
   {
     id: 'ispur',
     migrationPhase: 'autumn-return',
-    eyebrow: 'Winter Migration · Destination',
-    title: 'Arrival at Ispur',
-    location: 'Ispur',
-    text: `Ispur is the final winter destination in this route.
-      Here the flock settles after the long return from the
-      summer pastures and the annual cycle reaches its pause.`,
-    detail: `The next movement will begin when the season turns
-      again toward the mountains.`,
+    eyebrow: 'Agriculture and wool',
+    title: 'The Far End of the Descent',
+    location: 'Ispur, winter destination',
+    text: `“And here, the far end of the descent.
+    We reach it by the middle or end of November and pen here until March.
+    It is two hundred and twenty-seven kilometres from Bharmour.
+     The man who buys from us rarely pays what it’s worth.
+     A middleman, a Lala, takes his share before it reaches a trader,
+     and plenty of us have spent years trying to cut him out with little success.
+     “We also graze the farmland when the fields lie fallow. But more farmers are using pesticides and insecticides now, and that access is shrinking too. "`,
+    detail: ``,
     center: [76.189298, 31.503704],
     zoom: 15.994,
     pitch: 68,
@@ -622,3 +618,38 @@ bearing: -101.59,
 
 
 ];
+
+// Editable location content registry. The chapter objects above remain the
+// camera/story registry; this normalized view is the interface-facing source
+// for location titles, narrative, media and future audio transcripts.
+export const HIMACHAL_LOCATIONS = Object.freeze(
+  Object.fromEntries(
+    STORY
+      .filter((chapter) => chapter.id !== 'himachal' && chapter.id !== 'full-route')
+      .map((chapter) => [
+        chapter.id,
+        {
+          id: chapter.id,
+          name: chapter.location,
+          title: chapter.title,
+          subtitle: chapter.eyebrow || '',
+          narrative: chapter.text || '',
+          additionalInformation: chapter.detail || '',
+          images: [chapter.image, chapter.secondImage]
+            .filter(Boolean)
+            .map((src) => ({
+              src,
+              caption: 'Caption to be supplied.',
+              credit: 'Credit to be supplied.'
+            })),
+          audio: {
+            src: null,
+            narration: null,
+            transcript: null,
+            status: 'Placeholder — audio file and narration to be supplied.'
+          },
+          pointId: chapter.id
+        }
+      ])
+  )
+);

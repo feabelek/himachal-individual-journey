@@ -2,13 +2,15 @@ import {
   CASE_STUDIES,
   CHAPTER_DIALOGUES,
   IMAGES,
-  STORY
+  STORY,
+  HIMACHAL_LOCATIONS
 } from './himachal.js';
 import {
   ELEVATION_RANGES,
   SEASON_COLORS,
   SEASON_CYCLES
 } from './seasons.js';
+import { HIMACHAL_CONCLUSION } from './conclusion.js';
 
 
 export const STORY_REGISTRY = {
@@ -19,7 +21,8 @@ export const STORY_REGISTRY = {
     dialogues: CHAPTER_DIALOGUES,
     images: IMAGES,
     seasons: SEASON_CYCLES.himachal,
-    elevationRange: ELEVATION_RANGES.himachal
+    elevationRange: ELEVATION_RANGES.himachal,
+    conclusion: HIMACHAL_CONCLUSION
   }
 };
 
@@ -28,8 +31,10 @@ export {
   CASE_STUDIES,
   CHAPTER_DIALOGUES,
   IMAGES,
+  HIMACHAL_LOCATIONS,
   STORY,
   SEASON_COLORS,
   SEASON_CYCLES,
-  ELEVATION_RANGES
+  ELEVATION_RANGES,
+  HIMACHAL_CONCLUSION
 };
