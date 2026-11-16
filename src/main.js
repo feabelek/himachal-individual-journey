@@ -27,6 +27,7 @@ import {
   createCameraComposer,
   getCurrentCamera
 } from './atlas/camera-composer.js';
+import { createElevationProfile } from './atlas/elevation-profile.js';
 
 import {
   MAP_ASSETS
@@ -50,6 +51,7 @@ const RIVERS_URL = MAP_ASSETS.himachal.rivers;
 const TEMPLE_URL = MAP_ASSETS.himachal.temple;
 const SANCTUARY_URL = MAP_ASSETS.himachal.sanctuary;
 const HIMACHAL_BOUNDARY_URL = MAP_ASSETS.himachal.boundary;
+const HIMACHAL_DISTRICT_BOUNDARY_URL = MAP_ASSETS.himachal.districtBoundary;
 
 // Exhibition controls intentionally sit on top of the existing story engine.
 // They share STORY/currentStoryIndex rather than creating a second narrative.
@@ -59,7 +61,7 @@ let miniMap = null;
 let miniMapReady = false;
 let exhibitionPoints = [];
 let miniPositionMarker = null;
-let profileElevations = [];
+let elevationProfileRenderer = null;
 let miniRouteMetrics = { summer: null, winter: null };
 
 function routeCoordinatesFromGeoJSON(geoJSON, reverse = false) {
@@ -124,6 +126,12 @@ function utm43ToWgs84(
       1
       - eccentricitySquared
     );
+
+  ['route-points', 'route-labels'].forEach((layerId) => {
+    if (map.getLayer(layerId)) {
+      map.setLayoutProperty(layerId, 'visibility', atlasMode ? 'visible' : visibility);
+    }
+  });
 
   const meridionalArc =
     (northing - falseNorthing)
@@ -262,13 +270,13 @@ function utm43ToWgs84(
 
 const ATLAS_CAMERA = {
 
-  center: [79.2, 24.2],
+  center: [77.15, 31.82],
 
-  zoom: 4.15,
+  zoom: 7.25,
 
-  pitch: 0,
+  pitch: 34,
 
-  bearing: 0
+  bearing: -8
 
 };
 
@@ -315,6 +323,15 @@ let routeStartProgress = 0;
 
 let journeyProgress = 0;
 let conclusionActive = false;
+let ambientAudio = null;
+let ambientAudioUserGesture = false;
+let ambientAudioFadeFrame = null;
+let ambientAudioMuted = false;
+const sceneState = {
+  phase: 'overview',
+  locationId: null,
+  token: 0
+};
 
 let flockTravelDirection = 1;
 
@@ -552,8 +569,8 @@ miniMap = new maplibregl.Map({
   attributionControl: false,
   style: {
     version: 8,
-    sources: { satellite: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 256 } },
-    layers: [{ id: 'satellite', type: 'raster', source: 'satellite', paint: { 'raster-saturation': -0.35, 'raster-brightness-max': 0.8 } }]
+    sources: {},
+    layers: [{ id: 'mini-background', type: 'background', paint: { 'background-color': '#141a14' } }]
   },
   center: [76.7, 32.15],
   zoom: 7,
@@ -562,15 +579,15 @@ miniMap = new maplibregl.Map({
 });
 miniMap.on('load', async () => {
   try {
-    const [summerResponse, winterResponse, pointsResponse] = await Promise.all([
-      fetch(ROUTE_URL), fetch(ISPUR_DARCHA_ROUTE_URL), fetch(POINTS_URL)
+    const [summerResponse, winterResponse, pointsResponse, boundaryResponse] = await Promise.all([
+      fetch(ROUTE_URL), fetch(ISPUR_DARCHA_ROUTE_URL), fetch(POINTS_URL), fetch(HIMACHAL_BOUNDARY_URL)
     ]);
     const summer = await summerResponse.json();
     const winter = await winterResponse.json();
     const points = await pointsResponse.json();
+    const boundary = boundaryResponse.ok ? await boundaryResponse.json() : null;
     const pointFeatures = (points.features || []).map((feature, index) => ({ ...feature, id: index }));
     exhibitionPoints = pointFeatures;
-    renderElevationProfile();
     const summerCoordinates = routeCoordinatesFromGeoJSON(summer);
     const winterCoordinates = routeCoordinatesFromGeoJSON(winter, true);
     miniRouteMetrics = {
@@ -586,10 +603,22 @@ miniMap.on('load', async () => {
     };
     miniMap.addSource('mini-summer', { type: 'geojson', data: summer, lineMetrics: true });
     miniMap.addSource('mini-winter', { type: 'geojson', data: miniWinter, lineMetrics: true });
+    miniMap.addSource('mini-points', { type: 'geojson', data: { ...points, features: pointFeatures } });
+    if (boundary) {
+      miniMap.addSource('mini-boundary', { type: 'geojson', data: boundary });
+      miniMap.addLayer({ id: 'mini-boundary', type: 'line', source: 'mini-boundary', paint: { 'line-color': '#aebd98', 'line-width': 1, 'line-opacity': 0.5 } });
+    }
     miniMap.addLayer({ id: 'mini-summer-line', type: 'line', source: 'mini-summer', paint: { 'line-color': '#f18700', 'line-width': 2.2, 'line-opacity': 0.38 } });
     miniMap.addLayer({ id: 'mini-winter-line', type: 'line', source: 'mini-winter', paint: { 'line-color': '#55aadd', 'line-width': 2, 'line-dasharray': [2, 2], 'line-opacity': 0.34 } });
     miniMap.addLayer({ id: 'mini-summer-travel', type: 'line', source: 'mini-summer', paint: { 'line-color': '#f18700', 'line-width': 3.4, 'line-opacity': 0 } });
     miniMap.addLayer({ id: 'mini-winter-travel', type: 'line', source: 'mini-winter', paint: { 'line-color': '#55aadd', 'line-width': 3.2, 'line-opacity': 0 } });
+    miniMap.addLayer({ id: 'mini-points', type: 'circle', source: 'mini-points', paint: {
+      'circle-radius': 2.5,
+      'circle-color': ['match', ['get', '2_SEASONs'], 'WINTER', '#55aadd', '#f18700'],
+      'circle-opacity': 0.72,
+      'circle-stroke-color': '#eef1d8',
+      'circle-stroke-width': 0.5
+    } });
     const positionElement = document.createElement('div');
     positionElement.className = 'mini-position-marker';
     positionElement.setAttribute('aria-label', 'Current journey position');
@@ -597,7 +626,8 @@ miniMap.on('load', async () => {
       .setLngLat(getRouteCoordinate(journeyProgress) || STORY[currentStoryIndex]?.routeStop || STORY[0].center)
       .addTo(miniMap);
     const bounds = new maplibregl.LngLatBounds();
-    pointFeatures.forEach((feature) => bounds.extend(feature.geometry.coordinates));
+    summerCoordinates.forEach((coordinate) => bounds.extend(coordinate));
+    winterCoordinates.forEach((coordinate) => bounds.extend(coordinate));
     if (!bounds.isEmpty()) miniMap.fitBounds(bounds, { padding: 18, duration: 0 });
     miniMapReady = true;
     setMiniMapProgress(journeyProgress, exhibitionSeason);
@@ -639,23 +669,22 @@ atlasHome.innerHTML = `
   <div class="atlas-intro">
 
     <div class="atlas-kicker">
-      An Atlas of Indian Pastoralism
+      Himachal Pradesh · Western Himalaya
     </div>
 
     <h1>
-      Journeys Through
-      <br>
-      India's Pastoral Landscapes
+      A landscape shaped by movement
     </h1>
 
     <p>
-      Enjoy views of the diverse landscapes and explore how pastoral communities migrate through India, connecting seasonal grazing grounds,
-      settlements and ecosystems.
+      Follow a Gaddi pastoralist journey from the home village of Bharmour
+      through the high summer pastures and down toward the winter grounds.
     </p>
 
     <div class="atlas-instruction">
-      Select a case study on the map
+      Enter the Gaddi journey
     </div>
+    <button id="overview-begin" type="button">Begin journey <span aria-hidden="true">→</span></button>
 
   </div>
 
@@ -665,7 +694,13 @@ atlasHome.innerHTML = `
 document.body.appendChild(
   atlasHome
 );
-
+document.querySelector('#overview-begin').addEventListener('click', () => {
+  const caseStudy = CASE_STUDIES.find((item) => item.active) || CASE_STUDIES[0];
+  if (caseStudy) {
+    unlockAmbientAudio();
+    enterStateCaseStudy(caseStudy);
+  }
+});
 
 // ============================================================
 // CASE STUDY MARKERS
@@ -1335,30 +1370,17 @@ const exhibitionUI = document.createElement('div');
 exhibitionUI.id = 'exhibition-ui';
 exhibitionUI.innerHTML = `
   <header class="journey-identity">
-    <div class="identity-kicker">An individual journey · Western Himalaya</div>
-    <div id="journey-identity-location">Himachal Pradesh</div>
     <h2 id="journey-identity-title">Gaddi pastoralist journey</h2>
+    <div id="journey-identity-location">Himachal Pradesh</div>
     <p id="journey-identity-subtitle">Across the seasons, between Bharmour, Darcha and Ispur.</p>
     <button type="button" id="journey-back">← India overview</button>
   </header>
 
   <aside class="journey-rail" aria-label="Journey information">
-    <section class="narrative-panel">
-      <div class="narrative-control-row"><span class="rail-kicker">Location narrative</span><button type="button" id="audio-toggle" aria-label="Play narration">▶</button></div>
-      <div class="rail-story"><p id="journey-rail-text">The map is the story. Follow the route through the seasons.</p></div>
-      <div class="journey-actions">
-        <button type="button" id="journey-start" class="primary-action">Start journey</button>
-        <button type="button" id="journey-explore">Explore map</button>
-        <button type="button" id="journey-restart">Restart</button>
-      </div>
-      <div class="journey-audio-status"><span class="rail-kicker">Audio</span><span id="audio-status">Narration available</span></div>
-      <button type="button" id="conclusion-prompt" hidden>Continue beyond the route →</button>
-    </section>
     <section class="mini-map-panel" aria-label="Route overview">
-      <div class="mini-map-heading"><span>Route atlas</span><span id="journey-percent">0%</span></div>
       <div id="mini-map" aria-label="Mini-map showing both seasonal routes"></div>
-      <div class="elevation-heading"><span>Elevation profile</span><span id="journey-distance">Distance data available at route points</span></div>
-      <svg id="elevation-profile" viewBox="0 0 320 58" role="img" aria-label="Elevation profile"><path class="profile-fill"/><path class="profile-line"/><circle id="profile-position" cx="0" cy="52" r="4"/></svg>
+      <div class="elevation-heading"><span>Elevation profile</span></div>
+      <svg id="elevation-profile" viewBox="0 0 320 90" role="img" aria-label="Elevation in metres along the Darcha, Bharmour and Ispur journey"><path class="profile-fill"/><path class="profile-line"/><circle id="profile-position" cx="0" cy="52" r="4"/></svg>
     </section>
   </aside>
 
@@ -1381,12 +1403,24 @@ exhibitionUI.innerHTML = `
   </section>
 
   <nav class="map-toolbox" aria-label="Map controls and scale">
-    <button type="button" id="map-north" aria-label="Reset north"><span id="north-glyph">N</span></button>
+    <div class="journey-menu-wrap">
+      <button type="button" id="journey-menu-toggle" aria-label="Open journey menu" aria-expanded="false">☰</button>
+      <div class="journey-menu" hidden>
+        <button type="button" id="journey-explore">Explore map</button>
+        <button type="button" id="journey-restart">Restart journey</button>
+        <button type="button" id="conclusion-prompt" hidden>Continue beyond the route →</button>
+      </div>
+    </div>
+    <button type="button" id="map-north" aria-label="Reset north"><span id="north-glyph">▲</span></button>
     <div id="custom-scale-bar" aria-label="Map scale"><span>0</span><div class="custom-scale-line"><i></i></div><span id="custom-scale-distance">—</span></div>
     <div class="map-actions">
       <button type="button" id="map-zoom-in" aria-label="Zoom in">+</button>
       <button type="button" id="map-zoom-out" aria-label="Zoom out">−</button>
       <button type="button" id="legend-toggle" aria-expanded="false">Legend</button>
+    </div>
+    <div class="map-attribution">
+      <span id="map-attribution-label" hidden>Esri, Maxar, Earthstar Geographics | MapLibre</span>
+      <button type="button" id="map-attribution-toggle" aria-label="Show map attribution" aria-expanded="false">i</button>
     </div>
   </nav>
   <div class="placement-switch" hidden>
@@ -1394,11 +1428,26 @@ exhibitionUI.innerHTML = `
   </div>
 `;
 document.body.appendChild(exhibitionUI);
+elevationProfileRenderer = createElevationProfile(
+  document.querySelector('#elevation-profile'),
+  {
+    onSelect: (locationId) => {
+      if (!atlasMode) {
+        const index = STORY.findIndex((chapter) => chapter.id === locationId);
+        if (index >= 0) goToChapter(index);
+      }
+    }
+  }
+);
 initializeMiniMap();
 
 function updateExhibitionRail() {
+  if (atlasMode) return;
   const chapter = STORY[currentStoryIndex];
   if (!chapter) return;
+  // A late mini-map load may refresh the previous chapter while the camera is
+  // travelling. Do not let that asynchronous refresh interrupt the scene.
+  if (sceneState.phase === 'transition' && sceneState.locationId === chapter.id) return;
   const content = HIMACHAL_LOCATIONS[chapter.id] || {
     name: chapter.location || '',
     title: chapter.title || '',
@@ -1411,6 +1460,7 @@ function updateExhibitionRail() {
   exhibitionSeason = chapter.migrationPhase === 'autumn-return' || chapterSeason === 'winter' ? 'winter' : 'summer';
   const location = document.querySelector('#journey-identity-location');
   const text = document.querySelector('#journey-rail-text');
+  const narrativeEyebrow = document.querySelector('#narrative-eyebrow');
   const identityTitle = document.querySelector('#journey-identity-title');
   const identitySubtitle = document.querySelector('#journey-identity-subtitle');
   const percent = document.querySelector('#journey-percent');
@@ -1418,53 +1468,44 @@ function updateExhibitionRail() {
   if (identityTitle) identityTitle.textContent = content.title || 'Gaddi pastoralist journey';
   if (identitySubtitle) identitySubtitle.textContent = content.subtitle || 'Across the seasons, between Bharmour, Darcha and Ispur.';
   if (text) text.textContent = content.narrative || 'Follow the route through the seasons.';
+  if (narrativeEyebrow) narrativeEyebrow.textContent = content.subtitle || '';
   const audioStatus = document.querySelector('#audio-status');
   if (audioStatus) audioStatus.textContent = content.audio?.status || 'Narration available';
-  const audioToggle = document.querySelector('#audio-toggle');
-  if (audioToggle) {
-    audioToggle.dataset.playing = 'false';
-    audioToggle.textContent = '▶';
-  }
+  syncAmbientAudioUI();
   const conclusionPrompt = document.querySelector('#conclusion-prompt');
   if (conclusionPrompt) conclusionPrompt.hidden = chapter.id !== 'ispur' || conclusionActive;
   scheduleLocationReveal(chapter);
+  elevationProfileRenderer?.setJourneyState({ chapterId: chapter.id, season: exhibitionSeason });
   if (percent) percent.textContent = Number.isFinite(progress) ? `${Math.round(progress * 100)}% along route` : '—';
-  const profile = document.querySelector('#profile-position');
   const continuousCoordinate = getRouteCoordinate(journeyProgress);
   if (miniMapReady && miniPositionMarker && (continuousCoordinate || chapter.routeStop || chapter.center)) {
     miniPositionMarker.setLngLat(continuousCoordinate || chapter.routeStop || chapter.center);
   }
-  if (profile && Number.isFinite(progress)) {
-    profile.setAttribute('cx', String(Math.max(0, Math.min(320, progress * 320))));
-    const elevation = profileElevations.length ? profileElevations[Math.min(profileElevations.length - 1, Math.round(progress * (profileElevations.length - 1)))] : 0;
-    const minimum = profileElevations.length ? Math.min(...profileElevations) : 0;
-    const maximum = profileElevations.length ? Math.max(...profileElevations) : 1;
-    profile.setAttribute('cy', String(52 - Math.round(((elevation - minimum) / Math.max(1, maximum - minimum)) * 40)));
+}
+
+document.querySelector('#journey-menu-toggle').addEventListener('click', (event) => {
+  const menu = document.querySelector('.journey-menu');
+  const open = menu.hidden;
+  if (open) {
+    menu.hidden = false;
+    requestAnimationFrame(() => menu.classList.add('open'));
+  } else {
+    menu.classList.remove('open');
+    setTimeout(() => { menu.hidden = true; }, 180);
   }
-}
-
-function renderElevationProfile() {
-  profileElevations = exhibitionPoints.map((feature) => Number(feature.properties?.elevation_)).filter(Number.isFinite);
-  if (!profileElevations.length) return;
-  const minimum = Math.min(...profileElevations);
-  const range = Math.max(1, Math.max(...profileElevations) - minimum);
-  const points = profileElevations.map((value, index) => `${(index / Math.max(1, profileElevations.length - 1)) * 320},${52 - ((value - minimum) / range) * 40}`);
-  document.querySelector('#elevation-profile .profile-line')?.setAttribute('d', `M${points.join(' L')}`);
-  document.querySelector('#elevation-profile .profile-fill')?.setAttribute('d', `M${points.join(' L')} L320 58 L0 58 Z`);
-  const distance = document.querySelector('#journey-distance');
-  if (distance) distance.textContent = `${Math.round(minimum).toLocaleString()}–${Math.round(Math.max(...profileElevations)).toLocaleString()} m recorded`;
-}
-
-document.querySelector('#journey-start').addEventListener('click', () => {
-  exhibitionMode = 'guided';
-  if (atlasMode) {
-    const caseStudy = CASE_STUDIES.find((item) => item.active) || CASE_STUDIES[0];
-    if (caseStudy) enterStateCaseStudy(caseStudy);
-  } else if (currentStoryIndex !== 1) goToChapter(1);
+  event.currentTarget.setAttribute('aria-expanded', String(open));
+});
+document.querySelector('#map-attribution-toggle').addEventListener('click', (event) => {
+  const label = document.querySelector('#map-attribution-label');
+  const open = label.hidden;
+  label.hidden = !open;
+  event.currentTarget.setAttribute('aria-expanded', String(open));
 });
 document.querySelector('#journey-explore').addEventListener('click', () => {
   exhibitionMode = exhibitionMode === 'explore' ? 'guided' : 'explore';
   document.querySelector('#journey-explore').textContent = exhibitionMode === 'explore' ? 'Return to guided' : 'Explore map';
+  scrollLocked = false;
+  if (exhibitionMode === 'explore' && !cameraAnimating) setScenePhase('discovery', STORY[currentStoryIndex]?.id);
   exhibitionMode === 'explore' ? enableMapInteraction() : disableMapInteraction();
   document.body.classList.toggle('exploration-mode', exhibitionMode === 'explore');
 });
@@ -1481,13 +1522,6 @@ document.querySelector('#legend-toggle').addEventListener('click', (event) => {
   legend.classList.toggle('visible', open);
   event.currentTarget.setAttribute('aria-expanded', String(open));
 });
-document.querySelector('#audio-toggle').addEventListener('click', (event) => {
-  const playing = event.currentTarget.dataset.playing === 'true';
-  event.currentTarget.dataset.playing = String(!playing);
-  event.currentTarget.textContent = playing ? '▶' : 'Ⅱ';
-  document.querySelector('#audio-status').textContent = playing ? 'Placeholder narration' : 'Narration placeholder · no audio file';
-});
-
 function haversineDistance(first, second) {
   const earthRadius = 6371008.8;
   const toRadians = (value) => value * Math.PI / 180;
@@ -1527,7 +1561,7 @@ function updateCustomScaleBar() {
   const visibleDistance = haversineDistance(first, second);
   const displayedDistance = readableScaleDistance(visibleDistance);
   const lineWidth = Math.max(72, Math.min(sampleWidth, sampleWidth * displayedDistance / visibleDistance));
-  line.style.width = `${lineWidth}px`;
+  line.style.setProperty('width', `${lineWidth}px`, 'important');
   label.textContent = formatScaleDistance(displayedDistance);
   const north = document.querySelector('#north-glyph');
   if (north) north.style.transform = `rotate(${-map.getBearing()}deg)`;
@@ -1536,6 +1570,80 @@ function updateCustomScaleBar() {
 map.on('load', updateCustomScaleBar);
 map.on('move', updateCustomScaleBar);
 map.on('resize', updateCustomScaleBar);
+map.on('zoom', updateCustomScaleBar);
+map.on('pitch', updateCustomScaleBar);
+map.on('rotate', updateCustomScaleBar);
+
+function syncAmbientAudioUI() {
+  const button = document.querySelector('#audio-toggle');
+  if (!button) return;
+  const isPlaying = Boolean(ambientAudio && !ambientAudio.paused && !ambientAudioMuted);
+  button.dataset.playing = String(isPlaying);
+  button.textContent = isPlaying ? 'Ⅱ' : '▶';
+  button.setAttribute('aria-label', isPlaying ? 'Pause location ambience' : 'Play location ambience');
+}
+
+function fadeAmbientTo(targetVolume, duration = 900, pauseWhenSilent = false) {
+  if (!ambientAudio) return;
+  if (ambientAudioFadeFrame) cancelAnimationFrame(ambientAudioFadeFrame);
+  const startVolume = ambientAudio.volume;
+  const startedAt = performance.now();
+  const animate = (now) => {
+    const progress = Math.min(1, (now - startedAt) / Math.max(1, duration));
+    const eased = progress * progress * (3 - 2 * progress);
+    ambientAudio.volume = startVolume + (targetVolume - startVolume) * eased;
+    if (progress < 1) {
+      ambientAudioFadeFrame = requestAnimationFrame(animate);
+    } else {
+      ambientAudioFadeFrame = null;
+      if (pauseWhenSilent && targetVolume === 0) ambientAudio.pause();
+      syncAmbientAudioUI();
+    }
+  };
+  ambientAudioFadeFrame = requestAnimationFrame(animate);
+}
+
+function startAmbientForLocation(chapter, { fade = true } = {}) {
+  const audio = HIMACHAL_LOCATIONS[chapter?.id]?.audio;
+  if (!audio?.src || !ambientAudioUserGesture || ambientAudioMuted) {
+    syncAmbientAudioUI();
+    return;
+  }
+  if (!ambientAudio || ambientAudio.src !== new URL(audio.src, window.location.href).href) {
+    if (ambientAudio) ambientAudio.pause();
+    ambientAudio = new Audio(audio.src);
+    ambientAudio.preload = 'auto';
+    ambientAudio.loop = audio.loop === true;
+    ambientAudio.addEventListener('ended', syncAmbientAudioUI);
+    ambientAudio.addEventListener('error', () => {
+      const status = document.querySelector('#audio-status');
+      if (status) status.textContent = 'Audio unavailable';
+      syncAmbientAudioUI();
+    });
+  }
+  ambientAudio.volume = fade ? 0 : 0.72;
+  ambientAudio.play().then(() => {
+    if (fade) fadeAmbientTo(0.72, audio.fadeIn || 900);
+    syncAmbientAudioUI();
+  }).catch(() => {
+    const status = document.querySelector('#audio-status');
+    if (status) status.textContent = 'Press audio to listen';
+    syncAmbientAudioUI();
+  });
+}
+
+function stopAmbientForDeparture() {
+  if (!ambientAudio) return;
+  const chapter = STORY[currentStoryIndex];
+  const fadeOut = HIMACHAL_LOCATIONS[chapter?.id]?.audio?.fadeOut || 900;
+  fadeAmbientTo(0, fadeOut, true);
+}
+
+function unlockAmbientAudio() {
+  ambientAudioUserGesture = true;
+  const bharmour = STORY.find((chapter) => chapter.id === 'bharmour');
+  if (bharmour) startAmbientForLocation(bharmour);
+}
 
 const floatingPhoto = document.createElement('button');
 floatingPhoto.id = 'floating-photo';
@@ -1573,10 +1681,12 @@ function showFloatingPhotoImage(index, token = revealToken) {
   }, 90);
 }
 function positionFloatingPhoto() {
-  if (!floatingPhotoChapter || document.querySelector('#photo-placement')?.value !== 'geographic') return;
+  const placement = HIMACHAL_LOCATIONS[floatingPhotoChapter?.id]?.placement
+    || document.querySelector('#photo-placement')?.value;
+  if (!floatingPhotoChapter || placement !== 'geographic') return;
   const point = floatingPhotoChapter.routeStop || floatingPhotoChapter.center;
   const screenPoint = map.project(point);
-  floatingPhoto.style.left = `${Math.max(16, Math.min(window.innerWidth - 210, screenPoint.x + 18))}px`;
+  floatingPhoto.style.left = `${Math.max(16, Math.min(window.innerWidth - 210, screenPoint.x - 206))}px`;
   floatingPhoto.style.top = `${Math.max(80, Math.min(window.innerHeight - 150, screenPoint.y - 70))}px`;
 }
 floatingPhoto.addEventListener('click', () => {
@@ -1608,11 +1718,22 @@ if (new URLSearchParams(window.location.search).has('composer') || new URLSearch
 let revealToken = 0;
 let revealedLocationId = null;
 let revealTimers = [];
+function setScenePhase(phase, locationId = sceneState.locationId) {
+  sceneState.phase = phase;
+  sceneState.locationId = locationId;
+  document.body.classList.toggle('scene-transition', phase === 'transition');
+  document.body.classList.toggle('scene-arrival', phase === 'arrival');
+  document.body.classList.toggle('scene-discovery', phase === 'discovery');
+}
 function cancelLocationReveal() {
   revealToken += 1;
+  sceneState.token = revealToken;
+  stopAmbientForDeparture();
+  setScenePhase('transition');
   revealedLocationId = null;
   revealTimers.forEach((timer) => clearTimeout(timer));
   revealTimers = [];
+  legend?.classList.remove('visible');
   document.querySelector('.journey-rail')?.classList.remove('arrival-reveal');
   document.querySelector('.journey-rail')?.classList.add('content-leaving');
   document.querySelector('.narrative-panel')?.classList.remove('arrival-reveal');
@@ -1624,35 +1745,36 @@ function scheduleLocationReveal(chapter) {
   if (!chapter || chapter.id === revealedLocationId) return;
   revealedLocationId = chapter.id;
   const token = revealToken;
+  const content = HIMACHAL_LOCATIONS[chapter.id];
+  setScenePhase('arrival', chapter.id);
+  if (content?.audio?.src) startAmbientForLocation(chapter);
   updateFloatingPhoto(chapter);
   floatingPhoto.classList.remove('visible');
-  const rail = document.querySelector('.journey-rail');
+  const images = content?.images || [];
   const narrativePanel = document.querySelector('.narrative-panel');
   const identity = document.querySelector('.journey-identity');
-  rail?.classList.remove('arrival-reveal');
-  rail?.classList.remove('content-leaving');
-  narrativePanel?.classList.remove('content-leaving');
-  narrativePanel?.classList.remove('arrival-reveal');
-  identity?.classList.remove('content-leaving');
+  narrativePanel?.classList.remove('content-leaving', 'arrival-reveal');
+  identity?.classList.remove('content-leaving', 'arrival-reveal');
   requestAnimationFrame(() => {
     narrativePanel?.classList.add('arrival-reveal');
     identity?.classList.add('arrival-reveal');
   });
-  const content = HIMACHAL_LOCATIONS[chapter.id];
-  const images = content?.images || [];
-  images.slice(1).forEach((_, index) => {
-    revealTimers.push(setTimeout(() => {
-      if (token === revealToken) showFloatingPhotoImage(index + 1, token);
-    }, 1500 + index * 520));
-  });
-  if (content?.images?.length || chapter.image) {
+  if (images.length || chapter.image) {
     revealTimers.push(setTimeout(() => {
       if (token === revealToken) {
         updateFloatingPhoto(chapter);
         floatingPhoto.classList.add('visible');
       }
-    }, 920));
+    }, 520));
   }
+  images.slice(1).forEach((_, index) => {
+    revealTimers.push(setTimeout(() => {
+      if (token === revealToken) showFloatingPhotoImage(index + 1, token);
+    }, 800 + index * 360));
+  });
+  revealTimers.push(setTimeout(() => {
+    if (token === revealToken) setScenePhase('discovery', chapter.id);
+  }, 720));
 }
 
 function renderConclusion() {
@@ -2282,13 +2404,7 @@ function updateStoryPanel() {
       // LEGEND
       // ======================================================
 
-      legend.classList.toggle(
-
-        'visible',
-
-        chapter.showLegend
-
-      );
+      // Legend visibility is user-controlled and remains closed by default.
 
 
       // ======================================================
@@ -3642,6 +3758,7 @@ function updateMapVisibility() {
   const showHimachalBoundary =
     !atlasMode
     && activeStoryId === 'himachal';
+  const showDistrictBoundaries = atlasMode;
 
   const showKugtiContext =
     !atlasMode
@@ -3687,6 +3804,16 @@ function updateMapVisibility() {
       }
     }
   );
+
+  if (map.getLayer('himachal-district-boundaries')) {
+    map.setLayoutProperty('himachal-district-boundaries', 'visibility', showDistrictBoundaries ? 'visible' : 'none');
+  }
+
+  ['route-points', 'route-labels'].forEach((layerId) => {
+    if (map.getLayer(layerId)) {
+      map.setLayoutProperty(layerId, 'visibility', atlasMode ? 'visible' : visibility);
+    }
+  });
 
 
   if (
@@ -4479,6 +4606,7 @@ async function enterStateCaseStudy(caseStudy) {
     currentStoryIndex =
       0;
 
+    setScenePhase('transition', STORY[0].id);
     journeyProgress = routeStartProgress;
     updateFlockPosition(routeStartProgress);
 
@@ -4607,6 +4735,7 @@ async function returnToAtlas() {
     document.body.classList.remove(
       'case-study-active'
     );
+    setScenePhase('overview');
 
 
     atlasHome.classList.remove(
@@ -4989,6 +5118,7 @@ window.addEventListener(
 
     if (
       atlasMode
+      || exhibitionMode === 'explore'
       ||
       !storyReady
       ||
@@ -5185,6 +5315,21 @@ map.on(
           'Himachal boundary unavailable:',
           error
         );
+      }
+
+      try {
+        const districtResponse = await fetch(HIMACHAL_DISTRICT_BOUNDARY_URL);
+        if (!districtResponse.ok) throw new Error(`Could not load district boundaries: ${districtResponse.status}`);
+        map.addSource('himachal-district-boundaries', { type: 'geojson', data: await districtResponse.json() });
+        map.addLayer({
+          id: 'himachal-district-boundaries',
+          type: 'line',
+          source: 'himachal-district-boundaries',
+          layout: { visibility: 'visible', 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#c4cfad', 'line-width': 0.8, 'line-opacity': 0.42 }
+        });
+      } catch (error) {
+        console.warn('Himachal district boundaries unavailable:', error);
       }
 
 

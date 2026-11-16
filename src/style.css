@@ -1921,6 +1921,138 @@ body.image-viewer-open {
 
 }
 
+/* Reference-style full-width bottom scale strip. */
+.map-toolbox { left: 24px; right: auto; bottom: 0; width: calc(100% - 48px);; height: 52px; padding: 0 24px; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; background: rgba(13,13,13,.94); }
+.map-toolbox > * { flex-shrink: 0; }
+#custom-scale-bar { min-width: 220px; }
+.custom-scale-line { width: 180px; }
+.journey-menu-wrap { flex-shrink: 0; }
+.journey-identity { left: auto; right: 0; top: 58px; width: min(540px, 43vw); padding: 24px 64px 24px 150px; background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.28) 35%, rgba(0,0,0,.72) 82%, rgba(0,0,0,.82) 100%); }
+body.scene-transition .journey-identity,
+body.scene-transition .narrative-panel,
+body.scene-transition .mini-map-panel,
+body.scene-transition #floating-photo,
+body.scene-arrival .journey-identity,
+body.scene-arrival .narrative-panel,
+body.scene-arrival .mini-map-panel,
+body.scene-arrival #floating-photo { transition: none !important; animation: none !important; }
+body.scene-arrival .journey-identity,
+body.scene-arrival .narrative-panel,
+body.scene-arrival .mini-map-panel { opacity: 1; }
+body.scene-arrival .narrative-panel #narrative-eyebrow,
+body.scene-arrival .narrative-panel #journey-rail-text { animation: none !important; opacity: 1; }
+body.scene-discovery #floating-photo { transition: none !important; }
+@media (max-width: 650px) {
+  .map-toolbox { height: 46px; padding: 0 10px; }
+  #custom-scale-bar { min-width: 155px; }
+  .custom-scale-line { width: min(130px, 28vw); }
+  .journey-identity { right: 0; top: 48px; width: calc(100vw - 16px); padding: 16px 18px 16px 48px; }
+}
+
+/* Bottom-edge control strip and compact journey menu. */
+.map-toolbox { left: 0; right: 0; bottom: 0; height: 48px; padding: 0 24px; background: rgba(4,6,5,.9); }
+.journey-menu-wrap { position: relative; margin-left: 2px; }
+#journey-menu-toggle { width: 34px; height: 34px; min-width: 34px; padding: 0; border: 1px solid rgba(255,255,255,.25); background: transparent; color: rgba(246,242,233,.85); cursor: pointer; font-size: 18px; line-height: 1; }
+#journey-menu-toggle:hover, #journey-menu-toggle:focus-visible { border-color: #e4bb72; color: #fff0c8; outline: none; }
+.journey-menu { position: absolute; right: 0; bottom: 43px; display: grid; min-width: 150px; padding: 6px; border: 1px solid rgba(255,255,255,.2); background: rgba(8,11,8,.94); box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+.journey-menu[hidden] { display: none; }
+.journey-menu button { padding: 9px 10px; border: 0; background: transparent; color: rgba(246,242,233,.82); cursor: pointer; font-size: 10px; text-align: left; }
+.journey-menu button:hover, .journey-menu button:focus-visible { background: rgba(228,187,114,.14); color: #fff0c8; outline: none; }
+.journey-identity { left: auto; right: 66px; top: 72px; width: min(440px, 34vw); padding: 18px 28px 18px 70px; background: radial-gradient(ellipse at 100% 35%, rgba(0,0,0,.62), rgba(0,0,0,.22) 58%, transparent 88%); }
+.journey-identity #journey-identity-title { margin-top: 0; }
+@media (max-width: 650px) {
+  .map-toolbox { left: 0; right: 0; bottom: 0; height: 44px; padding: 0 10px; }
+  .journey-identity { right: 14px; top: 58px; width: calc(100vw - 28px); padding: 12px 16px 12px 40px; }
+}
+
+/* Final editorial arrangement: chapter identity upper-right, route diagram upper-left. */
+.journey-identity { left: auto; right: 34px; top: 34px; width: min(420px, 32vw); text-align: right; }
+.journey-identity #journey-identity-title { margin-top: 0; }
+.journey-identity #journey-identity-location { margin-top: 8px; }
+.journey-identity #journey-identity-subtitle { margin-top: 6px; }
+.mini-map-panel { left: 28px; right: auto; top: 24px; width: min(320px, 27vw); }
+.map-toolbox { gap: 8px; }
+.map-toolbox .journey-actions { display: flex; align-items: center; gap: 8px; margin: 0; }
+.map-toolbox .journey-actions button { min-height: 34px; padding: 6px 8px; border: 1px solid rgba(255,255,255,.2); background: transparent; color: rgba(246,242,233,.8); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+.map-toolbox .journey-actions .primary-action { border-color: rgba(228,187,114,.7); color: #f0ca81; }
+#floating-photo { left: auto; background: transparent; border: 0; box-shadow: none; }
+#floating-photo img { border: 0; box-shadow: 0 12px 30px rgba(0,0,0,.32); }
+#floating-photo .floating-caption { padding: 7px 0 0; background: transparent; color: rgba(246,242,233,.82); text-align: left; text-transform: none; text-shadow: 0 2px 10px rgba(0,0,0,.95); }
+@media (max-width: 650px) {
+  .journey-identity { right: 14px; top: 18px; width: calc(100vw - 28px); }
+  .mini-map-panel { left: 12px; right: auto; top: 12px; width: min(280px, calc(100vw - 24px)); }
+  .map-toolbox .journey-actions button { min-width: 0; padding: 5px 6px; }
+}
+
+/* Final viewport-edge strip and immediate location updates. */
+.map-toolbox { left: 0; right: 0; bottom: 0; width: 100%; height: 52px; padding: 0 24px; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; background: rgba(13,13,13,.94); }
+.map-toolbox > * { flex-shrink: 0; }
+#custom-scale-bar { min-width: 220px; }
+.custom-scale-line { width: 180px; }
+.journey-menu-wrap { flex-shrink: 0; }
+.journey-identity { left: auto; right: 0; top: 58px; width: min(540px, 43vw); padding: 24px 64px 24px 150px; background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.28) 35%, rgba(0,0,0,.72) 82%, rgba(0,0,0,.82) 100%); }
+body.scene-transition .journey-identity,
+body.scene-transition .narrative-panel,
+body.scene-transition .mini-map-panel,
+body.scene-transition #floating-photo,
+body.scene-arrival .journey-identity,
+body.scene-arrival .narrative-panel,
+body.scene-arrival .mini-map-panel,
+body.scene-arrival #floating-photo { transition: none !important; animation: none !important; }
+body.scene-arrival .journey-identity,
+body.scene-arrival .narrative-panel,
+body.scene-arrival .mini-map-panel { opacity: 1; }
+body.scene-arrival .narrative-panel #narrative-eyebrow,
+body.scene-arrival .narrative-panel #journey-rail-text { animation: none !important; opacity: 1; }
+@media (max-width: 650px) {
+  .map-toolbox { height: 46px; padding: 0 10px; }
+  #custom-scale-bar { min-width: 155px; }
+  .custom-scale-line { width: min(130px, 28vw); }
+  .journey-identity { right: 0; top: 48px; width: calc(100vw - 16px); padding: 16px 18px 16px 48px; }
+}
+
+/* Final control/title placement overrides. */
+.map-toolbox { left: 0; right: 0; bottom: 0; height: 48px; padding: 0 24px; background: rgba(4,6,5,.9); }
+.journey-menu-wrap { position: relative; margin-left: 2px; }
+#journey-menu-toggle { width: 34px; height: 34px; min-width: 34px; padding: 0; border: 1px solid rgba(255,255,255,.25); background: transparent; color: rgba(246,242,233,.85); cursor: pointer; font-size: 18px; line-height: 1; }
+#journey-menu-toggle:hover, #journey-menu-toggle:focus-visible { border-color: #e4bb72; color: #fff0c8; outline: none; }
+.journey-menu { position: absolute; right: 0; bottom: 43px; display: grid; min-width: 150px; padding: 6px; border: 1px solid rgba(255,255,255,.2); background: rgba(8,11,8,.94); box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+.journey-menu[hidden] { display: none; }
+.journey-menu button { padding: 9px 10px; border: 0; background: transparent; color: rgba(246,242,233,.82); cursor: pointer; font-size: 10px; text-align: left; }
+.journey-menu button:hover, .journey-menu button:focus-visible { background: rgba(228,187,114,.14); color: #fff0c8; outline: none; }
+.journey-identity { left: auto; right: 66px; top: 72px; width: min(440px, 34vw); padding: 18px 28px 18px 70px; background: radial-gradient(ellipse at 100% 35%, rgba(0,0,0,.62), rgba(0,0,0,.22) 58%, transparent 88%); }
+@media (max-width: 650px) {
+  .map-toolbox { left: 0; right: 0; bottom: 0; height: 44px; padding: 0 10px; }
+  .journey-identity { right: 14px; top: 58px; width: calc(100vw - 28px); padding: 12px 16px 12px 40px; }
+}
+
+/* Keep the persistent cartographic frame stable while only the location
+   content changes during a guided transition. */
+body.scene-transition .mini-map-panel,
+body.scene-transition .map-toolbox { opacity: 1; pointer-events: auto; transform: none; }
+body.scene-transition .narrative-panel { opacity: 1; transform: none; background: transparent; border-color: transparent; }
+body.scene-transition .narrative-panel #narrative-eyebrow,
+body.scene-transition .narrative-panel #journey-rail-text { opacity: 0; }
+
+#chapter-introduction { position: fixed; inset: 0; z-index: 25; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12vh 12vw; text-align: center; opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity 500ms ease, transform 700ms cubic-bezier(.2,.7,.2,1); }
+#chapter-introduction.active { opacity: 1; transform: translateY(0); }
+#chapter-introduction[aria-hidden="true"] { visibility: hidden; }
+#chapter-intro-location { color: #e4bb72; font-size: 10px; letter-spacing: .25em; text-transform: uppercase; text-shadow: 0 2px 18px rgba(0,0,0,.9); opacity: 0; transform: translateY(5px); transition: opacity var(--intro-label-duration, 800ms) ease, transform var(--intro-label-duration, 800ms) ease; }
+#chapter-introduction.active #chapter-intro-location { opacity: 1; transform: translateY(0); }
+#chapter-intro-title { max-width: 780px; margin: 14px 0 9px; color: #f7f2e8; font: 400 clamp(34px, 6vw, 78px)/.95 Georgia, serif; letter-spacing: -.045em; text-shadow: 0 3px 24px rgba(0,0,0,.88); clip-path: inset(0 0 100% 0); transition: clip-path var(--intro-title-duration, 1500ms) var(--intro-title-delay, 800ms) cubic-bezier(.2,.7,.2,1); }
+#chapter-introduction.active #chapter-intro-title { clip-path: inset(0 0 0 0); }
+#chapter-intro-subtitle { margin: 0; color: rgba(246,242,233,.82); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; opacity: 0; transform: translateY(7px); transition: opacity var(--intro-subtitle-duration, 1000ms) var(--intro-subtitle-delay, 2300ms) ease, transform var(--intro-subtitle-duration, 1000ms) var(--intro-subtitle-delay, 2300ms) ease; text-shadow: 0 2px 15px rgba(0,0,0,.9); }
+#chapter-introduction.active #chapter-intro-subtitle { opacity: 1; transform: translateY(0); }
+body.scene-arrival .journey-identity.arrival-reveal { animation-delay: 480ms; }
+body.scene-arrival .narrative-panel.arrival-reveal { animation-delay: 700ms; }
+body.scene-arrival .mini-map-panel { transition-delay: 850ms; }
+body.scene-arrival .map-toolbox { opacity: 0; pointer-events: none; }
+body.scene-discovery .map-toolbox { opacity: 1; pointer-events: auto; transition: opacity 520ms ease; }
+@media (prefers-reduced-motion: reduce) {
+  #chapter-introduction, #chapter-intro-title, #chapter-intro-subtitle { transition: none; clip-path: none; transform: none; }
+  #chapter-introduction.active, #chapter-introduction.active #chapter-intro-subtitle { opacity: 1; }
+}
+
 
 @media (prefers-reduced-motion: reduce) {
 
@@ -2573,6 +2705,10 @@ body.case-study-active .maplibregl-ctrl-scale { margin-left: 28px; margin-bottom
 .narrative-panel.arrival-reveal { animation: arrivalGroup 720ms cubic-bezier(.2,.7,.2,1) both; }
 @keyframes arrivalGroup { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 .narrative-panel.arrival-reveal #journey-rail-text { animation: arrivalTitle 620ms 360ms cubic-bezier(.2,.7,.2,1) both; }
+.narrative-panel.arrival-reveal #narrative-eyebrow { animation: arrivalTitle 520ms 120ms cubic-bezier(.2,.7,.2,1) both; }
+.narrative-panel.arrival-reveal #narrative-title { animation: arrivalTitle 620ms 240ms cubic-bezier(.2,.7,.2,1) both; }
+.narrative-panel.arrival-reveal #narrative-location { animation: arrivalTitle 520ms 420ms cubic-bezier(.2,.7,.2,1) both; }
+.narrative-panel.arrival-reveal #journey-rail-text { animation-delay: 560ms; }
 
 #conclusion-prompt { display: block; width: 100%; margin-top: 14px; padding: 10px 0; border: 0; border-top: 1px solid rgba(228,187,114,.65); background: transparent; color: #f0ca81; text-align: left; cursor: pointer; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
 #conclusion-prompt[hidden] { display: none; }
@@ -2601,10 +2737,31 @@ body.conclusion-active #exhibition-ui > :not(#conclusion-screen) { opacity: 0; p
   .journey-identity, .narrative-panel, #conclusion-screen, #conclusion-portrait, .conclusion-copy { transition: none; animation: none; }
 }
 
+/* Shared scene lifecycle: the landscape owns the screen while travelling. */
+.journey-identity, .narrative-panel, .mini-map-panel, #floating-photo { transition: opacity 520ms cubic-bezier(.2,.7,.2,1), transform 520ms cubic-bezier(.2,.7,.2,1), background-color 520ms ease, border-color 520ms ease; }
+body.scene-transition .journey-identity,
+body.scene-transition .narrative-panel,
+body.scene-transition .mini-map-panel,
+body.scene-transition #floating-photo { opacity: 0; pointer-events: none; }
+body.scene-transition .journey-identity { transform: translateY(8px); }
+body.scene-transition .narrative-panel { transform: translateY(8px); background: transparent; border-color: transparent; }
+body.scene-transition .mini-map-panel { transform: translateY(4px); }
+body.scene-transition #floating-photo { transform: translate3d(var(--photo-x), 12px, 0) scale(.96); }
+body.scene-arrival .journey-identity,
+body.scene-arrival .narrative-panel,
+body.scene-arrival .mini-map-panel { opacity: 1; pointer-events: auto; }
+body.scene-arrival .narrative-panel { background: rgba(12,15,12,.72); border-color: rgba(255,255,255,.16); }
+body.scene-arrival #floating-photo { pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+  .journey-identity, .narrative-panel, .mini-map-panel, #floating-photo { transition: none; }
+}
+
 /* Independent right-side story and cartographic surfaces. */
 .journey-rail { display: flex; flex-direction: column; gap: 14px; padding: 0; background: transparent; overflow: visible; backdrop-filter: none; -webkit-backdrop-filter: none; }
 .narrative-panel, .mini-map-panel { width: 100%; padding: 16px 18px; border: 1px solid rgba(255,255,255,.16); background: rgba(12,15,12,.72); box-shadow: 0 12px 32px rgba(0,0,0,.14); }
-.narrative-panel { min-height: 150px; }
+.narrative-panel { min-height: 0; }
+.narrative-panel .rail-story { max-height: min(38vh, 390px); overflow-y: auto; scrollbar-width: thin; }
+.narrative-panel .rail-story p { display: block; overflow: visible; -webkit-line-clamp: unset; }
 .mini-map-panel { padding-top: 3px; background: rgba(12,15,12,.45); backdrop-filter: none; -webkit-backdrop-filter: none; }
 .mini-map-panel .mini-map-heading { border-top: 0; }
 
@@ -2635,3 +2792,317 @@ body.case-study-active .maplibregl-ctrl-top-right { display: none; }
   .map-actions button { min-width: 31px; min-height: 31px; padding: 5px 7px; }
   #map-legend { left: 10px; bottom: 64px; max-width: calc(100vw - 20px); }
 }
+
+/* The temporary chapter card owns the first beat; the persistent identity
+   enters as one group after it instead of competing child animations. */
+body.scene-arrival .journey-identity.arrival-reveal #journey-identity-location,
+body.scene-arrival .journey-identity.arrival-reveal #journey-identity-title,
+body.scene-arrival .journey-identity.arrival-reveal #journey-identity-subtitle { animation: none; opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  #chapter-introduction { opacity: 1; transform: none; }
+}
+
+/* Standalone Himachal composition: the route diagram lives independently in
+   the upper-right, while the editorial narrative floats over the landscape. */
+.journey-rail { top: auto; bottom: 92px; right: 28px; width: min(380px, 30vw); max-height: 58vh; overflow: visible; }
+.narrative-panel { padding: 0; border: 0; background: transparent; box-shadow: none; }
+.narrative-panel .narrative-control-row { border-bottom: 0; }
+#narrative-eyebrow-row { display: flex; align-items: center; gap: 12px; }
+#narrative-eyebrow-row #audio-toggle { margin-top: 0; }
+.narrative-panel .rail-story { max-height: min(46vh, 520px); overflow-y: auto; padding: 16px 18px; background: rgba(0,0,0,.58); }
+.narrative-panel .rail-story p { margin: 12px 0 0; text-align: left; text-shadow: 0 2px 18px rgba(0,0,0,.9); }
+#narrative-eyebrow { margin-top: 14px; color: #e4bb72; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; text-shadow: 0 2px 14px rgba(0,0,0,.9); }
+#narrative-title { margin: 8px 0 4px; color: #f7f2e8; font: 400 clamp(24px, 2.5vw, 42px)/1 Georgia, serif; letter-spacing: -.035em; text-shadow: 0 2px 18px rgba(0,0,0,.9); }
+#narrative-location { color: rgba(246,242,233,.7); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; text-shadow: 0 2px 14px rgba(0,0,0,.9); }
+.mini-map-panel { position: fixed; top: 24px; right: 28px; z-index: 25; width: min(320px, 27vw); padding: 10px 12px 12px; border: 1px solid rgba(231,239,203,.28); background: rgba(10,15,10,.72); box-shadow: 0 12px 30px rgba(0,0,0,.22); }
+#mini-map { height: 154px; border: 0; background: transparent; }
+.mini-map-panel .mini-map-heading { color: rgba(246,242,233,.68); }
+.mini-map-panel .elevation-heading { margin-top: 8px; }
+#elevation-profile { height: 78px; }
+#elevation-profile text { fill: rgba(246,242,233,.72); font: 8px Inter, Helvetica, Arial, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+@media (max-width: 650px) {
+  .journey-rail { right: 12px; bottom: 70px; width: calc(100vw - 24px); max-height: 43vh; }
+  .mini-map-panel { top: 12px; right: 12px; width: min(280px, calc(100vw - 24px)); }
+  #mini-map { height: 116px; }
+  #elevation-profile { height: 68px; }
+}
+
+/* Chapter introduction is a true presentation state: no hidden control may
+   remain in the hit-testing tree while the landscape and title are alone. */
+body.chapter-intro-active #exhibition-ui > :not(#chapter-introduction),
+body.chapter-intro-active #story-panel,
+body.chapter-intro-active #map-legend,
+body.chapter-intro-active #floating-photo,
+body.chapter-intro-active #image-viewer,
+body.chapter-intro-active #camera-composer,
+body.chapter-intro-active .maplibregl-control-container { display: none !important; visibility: hidden !important; pointer-events: none !important; }
+body.chapter-intro-active #chapter-introduction { display: flex; visibility: visible; pointer-events: none; }
+
+#opening-screen { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; overflow: hidden; background: linear-gradient(180deg, rgba(12,18,14,.2), rgba(8,12,9,.78)), linear-gradient(90deg, rgba(9,14,11,.5), transparent 65%); color: #f7f2e8; transition: opacity 900ms ease, visibility 900ms ease; }
+#opening-screen::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 52% 58%, transparent 0 22%, rgba(8,12,9,.38) 72%), linear-gradient(180deg, rgba(6,10,8,.05), rgba(4,7,5,.74)); pointer-events: none; }
+.opening-screen-copy { position: relative; z-index: 1; width: min(720px, 78vw); text-align: center; text-shadow: 0 3px 25px rgba(0,0,0,.9); }
+.opening-kicker { color: #e4bb72; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; }
+.opening-screen-copy h1 { margin: 16px 0 12px; font: 400 clamp(46px, 8vw, 112px)/.88 Georgia, serif; letter-spacing: -.055em; }
+.opening-screen-copy p { margin: 0 auto; color: rgba(246,242,233,.78); font-size: clamp(12px, 1.3vw, 17px); letter-spacing: .08em; }
+#begin-journey { margin-top: 40px; padding: 12px 0; border: 0; border-bottom: 1px solid rgba(228,187,114,.75); background: transparent; color: #f0ca81; cursor: pointer; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; }
+#begin-journey span { display: inline-block; margin-left: 10px; transition: transform .25s ease; }
+#begin-journey:hover span, #begin-journey:focus-visible span { transform: translateX(5px); }
+#begin-journey:focus-visible { outline: 1px solid #f0ca81; outline-offset: 7px; }
+body.opening-active #atlas-home,
+body.opening-active #exhibition-ui,
+body.opening-active #map-legend,
+body.opening-active .maplibregl-control-container { opacity: 0; visibility: hidden; pointer-events: none; }
+body:not(.opening-active) #opening-screen { opacity: 0; visibility: hidden; pointer-events: none; }
+#overview-begin { margin-top: 22px; padding: 10px 0; border: 0; border-bottom: 1px solid rgba(228,187,114,.7); background: transparent; color: #f0ca81; cursor: pointer; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; pointer-events: auto; }
+#overview-begin span { margin-left: 8px; }
+@media (prefers-reduced-motion: reduce) {
+  #opening-screen { transition: none; }
+  #begin-journey span { transition: none; }
+}
+
+/* Final position overrides. */
+.journey-identity { left: auto; right: 34px; top: 34px; width: min(420px, 32vw); text-align: right; }
+.journey-identity #journey-identity-title { margin-top: 0; }
+.journey-identity #journey-identity-location { margin-top: 8px; }
+.journey-identity #journey-identity-subtitle { margin-top: 6px; }
+.mini-map-panel { left: 28px; right: auto; top: 24px; width: min(320px, 27vw); }
+.map-toolbox { gap: 8px; }
+.map-toolbox .journey-actions { display: flex; align-items: center; gap: 8px; margin: 0; }
+.map-toolbox .journey-actions button { min-height: 34px; padding: 6px 8px; border: 1px solid rgba(255,255,255,.2); background: transparent; color: rgba(246,242,233,.8); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+.map-toolbox .journey-actions .primary-action { border-color: rgba(228,187,114,.7); color: #f0ca81; }
+#floating-photo { left: auto; background: transparent; border: 0; box-shadow: none; }
+#floating-photo img { border: 0; box-shadow: 0 12px 30px rgba(0,0,0,.32); }
+#floating-photo .floating-caption { padding: 7px 0 0; background: transparent; color: rgba(246,242,233,.82); text-align: left; text-transform: none; text-shadow: 0 2px 10px rgba(0,0,0,.95); }
+@media (max-width: 650px) {
+  .journey-identity { right: 14px; top: 18px; width: calc(100vw - 28px); }
+  .mini-map-panel { left: 12px; right: auto; top: 12px; width: min(280px, calc(100vw - 24px)); }
+  .map-toolbox .journey-actions button { min-width: 0; padding: 5px 6px; }
+}
+
+/* Active final overrides for the bottom control rail and chapter identity. */
+.map-toolbox { left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 52px !important; padding: 0 24px !important; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; background: rgba(13,13,13,.94) !important; }
+.map-toolbox > * { flex-shrink: 0; }
+#custom-scale-bar { min-width: 220px; }
+.custom-scale-line { width: 180px; }
+.journey-menu-wrap { flex-shrink: 0; z-index: 30; }
+.journey-menu { z-index: 40; }
+.journey-identity { left: auto !important; right: 0 !important; top: 58px !important; width: min(540px, 43vw) !important; padding: 24px 64px 24px 150px !important; background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.2) 30%, rgba(0,0,0,.66) 78%, rgba(0,0,0,.82) 100%) !important; }
+body.scene-transition .journey-identity,
+body.scene-transition .narrative-panel,
+body.scene-transition .mini-map-panel,
+body.scene-transition #floating-photo,
+body.scene-arrival .journey-identity,
+body.scene-arrival .narrative-panel,
+body.scene-arrival .mini-map-panel,
+body.scene-arrival #floating-photo { transition: none !important; animation: none !important; }
+body.scene-arrival .journey-identity,
+body.scene-arrival .narrative-panel,
+body.scene-arrival .mini-map-panel { opacity: 1; }
+body.scene-arrival .narrative-panel #narrative-eyebrow,
+body.scene-arrival .narrative-panel #journey-rail-text { animation: none !important; opacity: 1; }
+body.scene-discovery #floating-photo { transition: none !important; }
+@media (max-width: 650px) {
+  .map-toolbox { height: 46px !important; padding: 0 10px !important; }
+  #custom-scale-bar { min-width: 155px; }
+  .custom-scale-line { width: min(130px, 28vw); }
+  .journey-identity { right: 0 !important; top: 48px !important; width: calc(100vw - 16px) !important; padding: 16px 18px 16px 48px !important; }
+}
+
+/* Final corrections: keep the menu above the overflow-clipped strip and put
+   the scale line against the viewport edge. */
+.map-toolbox { align-items: flex-end !important; padding-bottom: 5px !important; }
+.journey-menu { position: fixed !important; right: 24px !important; bottom: 60px !important; z-index: 100 !important; }
+.journey-identity { background: radial-gradient(ellipse at 100% 38%, rgba(0,0,0,.52) 0%, rgba(0,0,0,.18) 52%, transparent 86%) !important; box-shadow: none !important; }
+@media (max-width: 650px) {
+  .journey-menu { right: 10px !important; bottom: 54px !important; }
+}
+
+/* Compact bottom instrument: content-width, flush with the viewport edge. */
+.map-toolbox { left: 24px !important; right: auto !important; bottom: 0 !important; width: max-content !important; max-width: calc(100vw - 48px); height: 48px !important; padding: 0 12px !important; overflow: visible !important; }
+.map-toolbox > #map-north,
+.map-actions button,
+#journey-menu-toggle { width: 36px !important; height: 36px !important; min-width: 36px !important; min-height: 36px !important; padding: 0 !important; display: grid; place-items: center; }
+.map-actions { gap: 5px; }
+.map-actions #legend-toggle { font-size: 8px; letter-spacing: .04em; }
+#custom-scale-bar { min-width: 180px; }
+.custom-scale-line { width: 150px; }
+.journey-identity { position: absolute; isolation: isolate; background: transparent !important; box-shadow: none !important; }
+.journey-identity::before { content: ''; position: absolute; z-index: -1; top: -80px; right: -240px; bottom: -80px; left: -180px; pointer-events: none; background: radial-gradient(ellipse at 78% 45%, rgba(0,0,0,.64) 0%, rgba(0,0,0,.32) 42%, rgba(0,0,0,0) 82%); }
+.journey-identity > * { position: relative; }
+@media (max-width: 650px) {
+  .map-toolbox { left: 10px !important; max-width: calc(100vw - 20px); padding: 0 7px !important; }
+  #custom-scale-bar { min-width: 135px; }
+  .custom-scale-line { width: min(110px, 25vw); }
+}
+
+/* Keep cartographic context persistent while chapter content changes. */
+body.scene-transition .mini-map-panel,
+body.scene-transition .map-toolbox { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; transform: none !important; }
+
+/* Remove the oversized shared black rail; retain compact instrument surfaces. */
+.map-toolbox { background: transparent !important; width: max-content !important; height: 48px !important; padding: 0 !important; gap: 7px !important; }
+.map-toolbox > #map-north,
+.map-actions button,
+#journey-menu-toggle { background: rgba(13,13,13,.9) !important; border-color: rgba(255,255,255,.22) !important; }
+#custom-scale-bar { height: 48px; padding: 0 12px; background: rgba(13,13,13,.9); }
+@media (max-width: 650px) {
+  .map-toolbox { height: 44px !important; gap: 5px !important; }
+  #custom-scale-bar { height: 44px; padding: 0 8px; }
+}
+
+/* Full-width, thin exhibition control tab. */
+.map-toolbox { position: fixed !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; max-width: none !important; height: 40px !important; min-height: 40px !important; padding: 0 18px !important; gap: 6px !important; overflow: visible !important; background: rgba(13,13,13,.94) !important; z-index: 30 !important; }
+.map-toolbox > #map-north,
+.map-actions button,
+#journey-menu-toggle { width: 30px !important; height: 30px !important; min-width: 30px !important; min-height: 30px !important; padding: 0 !important; font-size: 13px !important; }
+#north-glyph { font-size: 13px !important; }
+#custom-scale-bar { min-width: 150px !important; height: 40px !important; padding: 0 8px !important; gap: 5px !important; font-size: 8px !important; background: transparent !important; }
+.custom-scale-line { width: 120px !important; height: 8px !important; border-top-width: 1px !important; }
+.custom-scale-line::before, .custom-scale-line::after { top: -4px; height: 7px; }
+.map-actions { gap: 4px !important; }
+.journey-menu { bottom: 43px !important; }
+.maplibregl-ctrl-bottom-right { position: fixed !important; right: 8px !important; bottom: 0 !important; z-index: 40 !important; margin: 0 !important; }
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl { margin: 0 0 4px 0 !important; background: transparent !important; color: rgba(255,255,255,.75) !important; }
+@media (max-width: 650px) {
+  .map-toolbox { height: 36px !important; min-height: 36px !important; padding: 0 8px !important; }
+  .map-toolbox > #map-north,
+  .map-actions button,
+  #journey-menu-toggle { width: 28px !important; height: 28px !important; min-width: 28px !important; min-height: 28px !important; }
+  #custom-scale-bar { min-width: 120px !important; height: 36px !important; }
+  .custom-scale-line { width: 92px !important; }
+  .maplibregl-ctrl-bottom-right { right: 4px !important; }
+}
+
+/* Separate the bottom control groups so labels cannot collide. */
+.map-toolbox > #map-north { order: 1 !important; }
+.map-toolbox .map-actions { order: 2 !important; display: flex !important; align-items: center; gap: 5px !important; margin: 0 0 0 4px !important; }
+.map-toolbox #custom-scale-bar { order: 3 !important; margin-left: 14px !important; flex: 0 0 auto; }
+.map-toolbox .journey-menu-wrap { order: 4 !important; margin-left: 5px !important; }
+.map-actions #legend-toggle { width: 62px !important; min-width: 62px !important; font-size: 9px !important; letter-spacing: .06em !important; white-space: nowrap; }
+.map-actions button { font-size: 14px !important; }
+#custom-scale-bar { font-size: 10px !important; }
+.maplibregl-ctrl-bottom-right { right: 10px !important; bottom: 0 !important; z-index: 100 !important; }
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib,
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib a,
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib-button { color: rgba(255,255,255,.82) !important; background: transparent !important; font-size: 9px !important; text-shadow: 0 1px 4px #000; }
+@media (max-width: 650px) {
+  .map-toolbox #custom-scale-bar { margin-left: 8px !important; }
+  .map-actions #legend-toggle { width: 54px !important; min-width: 54px !important; font-size: 8px !important; }
+  .maplibregl-ctrl-bottom-right { right: 4px !important; }
+}
+
+/* Bottom rail baseline and visible attribution. */
+.map-toolbox { bottom: 8px !important; height: 42px !important; min-height: 42px !important; align-items: flex-end !important; padding-bottom: 3px !important; }
+.map-toolbox #custom-scale-bar { height: 36px !important; align-items: flex-end !important; padding-bottom: 2px !important; }
+.map-toolbox > #map-north,
+.map-toolbox .map-actions button,
+.map-toolbox #journey-menu-toggle { margin-bottom: 0 !important; }
+#map-attribution { order: 5; margin: 0 0 5px auto; padding-left: 14px; color: rgba(255,255,255,.76); font: 9px/1.2 Inter, Helvetica, Arial, sans-serif; white-space: nowrap; text-shadow: 0 1px 4px #000; }
+@media (max-width: 650px) {
+  .map-toolbox { bottom: 6px !important; height: 38px !important; min-height: 38px !important; }
+  .map-toolbox #custom-scale-bar { height: 32px !important; }
+  #map-attribution { font-size: 7px; padding-left: 6px; }
+}
+
+/* Bottom rail: full-width black field with the journey menu at the leading edge. */
+.map-toolbox { bottom: 0 !important; height: 52px !important; min-height: 52px !important; padding: 0 24px !important; background: rgba(13,13,13,.96) !important; }
+.journey-menu-wrap { order: 0 !important; margin: 0 !important; }
+.map-toolbox > #map-north { order: 1 !important; }
+.map-toolbox .map-actions { order: 2 !important; }
+.map-toolbox #custom-scale-bar { order: 3 !important; }
+.map-attribution { order: 5; position: relative; margin-left: auto; display: flex; align-items: center; }
+#map-attribution-toggle { width: 28px !important; height: 28px !important; min-width: 28px !important; min-height: 28px !important; padding: 0 !important; border: 1px solid rgba(255,255,255,.25); background: transparent; color: rgba(255,255,255,.82); cursor: pointer; font-size: 16px; }
+#map-attribution-toggle:hover, #map-attribution-toggle:focus-visible { border-color: #e4bb72; color: #fff0c8; outline: none; }
+#map-attribution-details { position: absolute; right: 0; bottom: 37px; width: max-content; max-width: 320px; padding: 9px 11px; border: 1px solid rgba(255,255,255,.2); background: rgba(8,11,8,.95); color: rgba(255,255,255,.82); font: 9px/1.4 Inter, Helvetica, Arial, sans-serif; white-space: nowrap; box-shadow: 0 8px 20px rgba(0,0,0,.35); }
+#map-attribution-details[hidden] { display: none; }
+@media (max-width: 650px) {
+  .map-toolbox { height: 40px !important; min-height: 40px !important; padding: 0 8px !important; }
+  #map-attribution-details { right: 0; bottom: 35px; max-width: 240px; white-space: normal; }
+}
+
+/* Attribution pill based on the supplied reference treatment. */
+.map-attribution { height: 32px; padding: 0 4px 0 14px; border-radius: 18px; background: rgba(218,226,223,.94); color: #14252b; font: 14px/1 Inter, Helvetica, Arial, sans-serif; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.22); }
+#map-attribution-label { display: inline-flex; align-items: center; height: 100%; }
+#map-attribution-toggle { width: 27px !important; height: 27px !important; min-width: 27px !important; min-height: 27px !important; margin-left: 6px; border: 2px solid #58a9e2 !important; border-radius: 50%; background: #071b28 !important; color: #fff !important; font: 700 16px/1 Georgia, serif !important; }
+#map-attribution-toggle:hover, #map-attribution-toggle:focus-visible { background: #0d3147 !important; outline: none; }
+@media (max-width: 650px) {
+  .map-attribution { height: 28px; padding-left: 9px; font-size: 9px; }
+  #map-attribution-toggle { width: 23px !important; height: 23px !important; min-width: 23px !important; min-height: 23px !important; font-size: 13px !important; }
+}
+
+/* Lean final cartographic rail and toggleable attribution treatment. */
+.map-toolbox { height: 38px !important; min-height: 38px !important; padding: 0 14px !important; gap: 5px !important; }
+.map-toolbox > #map-north,
+.map-actions button,
+#journey-menu-toggle { width: 27px !important; height: 27px !important; min-width: 27px !important; min-height: 27px !important; font-size: 12px !important; }
+#north-glyph { font-size: 11px !important; }
+#custom-scale-bar { min-width: 145px !important; height: 34px !important; padding: 0 6px !important; font-size: 8px !important; gap: 4px !important; }
+.custom-scale-line { width: 112px !important; height: 7px !important; }
+.map-actions #legend-toggle { width: 52px !important; min-width: 52px !important; font-size: 7px !important; }
+.map-attribution { height: 24px; padding: 0 3px 0 9px; border-radius: 14px; font-size: 10px; }
+#map-attribution-toggle { width: 20px !important; height: 20px !important; min-width: 20px !important; min-height: 20px !important; margin-left: 4px; font-size: 12px !important; }
+#map-attribution-details { bottom: 31px; font-size: 8px; }
+@media (max-width: 650px) {
+  .map-toolbox { height: 34px !important; min-height: 34px !important; padding: 0 7px !important; }
+  .map-toolbox > #map-north,
+  .map-actions button,
+  #journey-menu-toggle { width: 24px !important; height: 24px !important; min-width: 24px !important; min-height: 24px !important; }
+  #custom-scale-bar { min-width: 115px !important; height: 30px !important; }
+  .custom-scale-line { width: 86px !important; }
+  .map-attribution { height: 22px; font-size: 8px; }
+}
+
+/* Menu leads the bottom rail; attribution text is revealed by its info button. */
+.map-toolbox .journey-menu-wrap { order: 0 !important; margin-left: 0 !important; }
+.map-toolbox > #map-north { order: 1 !important; }
+.map-toolbox .map-actions { order: 2 !important; }
+.map-toolbox #custom-scale-bar { order: 3 !important; }
+.map-attribution { order: 5 !important; }
+#map-attribution-label[hidden] { display: none !important; }
+
+/* Sleek left-side journey menu and centered scale instrument. */
+.map-toolbox { align-items: center !important; padding-bottom: 0 !important; }
+.map-toolbox #custom-scale-bar { height: 34px !important; align-items: center !important; padding-bottom: 0 !important; }
+.journey-menu { left: 0 !important; right: auto !important; bottom: 42px !important; min-width: 144px; border: 1px solid rgba(255,255,255,.2); border-radius: 14px; opacity: 0; transform: translateY(8px) scale(.96); transform-origin: bottom left; transition: opacity 180ms ease, transform 180ms cubic-bezier(.2,.7,.2,1); }
+.journey-menu.open { opacity: 1; transform: translateY(0) scale(1); }
+.journey-menu button { border-radius: 9px; font-size: 9px; letter-spacing: .07em; transition: background .16s ease, color .16s ease; }
+#journey-menu-toggle { border-radius: 9px; }
+@media (max-width: 650px) {
+  .journey-menu { left: 0 !important; bottom: 38px !important; }
+  .map-toolbox #custom-scale-bar { height: 30px !important; }
+}
+
+/* Center the dynamic scale instrument within the full-width bottom rail. */
+.map-toolbox #custom-scale-bar { position: absolute; left: 50%; transform: translateX(-50%); margin: 0 !important; }
+
+/* Scale aligns with the control buttons vertically; it is not centered as a
+   separate horizontal object. */
+.map-toolbox #custom-scale-bar { position: static !important; left: auto !important; transform: none !important; align-self: center !important; height: 34px !important; margin: 0 8px !important; }
+.map-toolbox { align-items: center !important; }
+.map-toolbox > #map-north,
+.map-toolbox .map-actions button,
+.map-toolbox #journey-menu-toggle { align-self: center; }
+
+/* Remove the minimap/profile card surfaces. The route diagram alone is the
+   visual object. */
+.mini-map-panel { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+.mini-map-panel .elevation-heading { background: transparent; border: 0; }
+#mini-map { width: 184px !important; height: 184px !important; margin: 0 auto; border: 1px solid rgba(231,239,203,.34) !important; border-radius: 50%; overflow: hidden; background: transparent !important; }
+#mini-map .maplibregl-canvas,
+#mini-map .maplibregl-canvas-container { border-radius: 50%; overflow: hidden; }
+#elevation-profile { background: transparent !important; border: 0 !important; }
+@media (max-width: 650px) {
+  .map-toolbox #custom-scale-bar { height: 30px !important; margin: 0 4px !important; }
+  #mini-map { width: 142px !important; height: 142px !important; }
+}
+
+/* Data-driven profile styling. */
+#elevation-profile .profile-route { fill: none; stroke: var(--profile-color); stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
+#elevation-profile .profile-axis { fill: none; stroke: rgba(246,242,233,.35); stroke-width: .7; }
+#elevation-profile .profile-tick { fill: none; stroke: rgba(246,242,233,.35); stroke-width: .6; }
+#elevation-profile .profile-axis-label { fill: rgba(246,242,233,.65); font: 7px Inter, Helvetica, Arial, sans-serif; }
+#elevation-profile .profile-value { fill: rgba(246,242,233,.78); font: 6px Inter, Helvetica, Arial, sans-serif; pointer-events: none; }
+#elevation-profile .profile-current-elevation { fill: #fff7c2; font: 8px Inter, Helvetica, Arial, sans-serif; letter-spacing: .04em; }
+#elevation-profile .profile-point { fill: var(--profile-color); stroke: rgba(246,242,233,.72); stroke-width: .6; cursor: pointer; }
+#elevation-profile .profile-point.active { r: 4.5; stroke: #fff7c2; stroke-width: 1.4; }
+#elevation-profile .profile-position { fill: #fff7c2; stroke: #202820; stroke-width: 1.2; pointer-events: none; }

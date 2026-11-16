@@ -216,6 +216,8 @@ We never skip it, because one sickness on the high ground can undo a whole seaso
     routeStop: [76.5326151804133, 32.4444683599394],
     image: IMAGES.bharmour,
     secondImage: IMAGES.dipping,
+    imageCaptions: ['', ''],
+    imageCredits: ['', ''],
     showLegend: true
   },
   // ----------------------------------------------------------
@@ -299,6 +301,8 @@ bearing: -59.46,
     showKugtiContext: true,
     image: IMAGES.jalsu,
     secondImage: null,
+    imageCaptions: [''],
+    imageCredits: [''],
     showLegend: true
   },
 
@@ -323,6 +327,8 @@ bearing: -59.46,
     showKugtiContext: true,
     image: IMAGES.temple,
     secondImage: null,
+    imageCaptions: [''],
+    imageCredits: [''],
     showLegend: true
   },
 
@@ -417,6 +423,8 @@ bearing: -101.59,
     showKugtiContext: true,
     image: IMAGES.darcha,
     secondImage: null,
+    imageCaptions: [''],
+    imageCredits: [''],
     showLegend: true
   },
 
@@ -542,6 +550,24 @@ Every year I ask him which part of this life is the hardest. He says people have
     showLegend: true
   },
   //-------------------------
+  // KALAPANI
+  //-------------------------
+  {
+    id: 'kalapani',
+    migrationPhase: 'autumn-return',
+    eyebrow: 'Winter Transit · Content to be supplied',
+    title: 'Kalapani',
+    location: 'Kalapani',
+    text: '[Narrative placeholder — approved Kalapani story text to be supplied.]',
+    detail: '',
+    center: [76.28003, 31.93961],
+    zoom: 13.4,
+    pitch: 48,
+    bearing: 0,
+    routeStop: [76.28003, 31.93961],
+    showLegend: true
+  },
+  //-------------------------
   // DEHRA GOPIPUR
   //-------------------------
   {
@@ -636,18 +662,36 @@ export const HIMACHAL_LOCATIONS = Object.freeze(
           narrative: chapter.text || '',
           additionalInformation: chapter.detail || '',
           images: [chapter.image, chapter.secondImage]
-            .filter(Boolean)
-            .map((src) => ({
+            .map((src, index) => ({ src, index }))
+            .filter((image) => Boolean(image.src))
+            .map(({ src, index }) => ({
               src,
-              caption: 'Caption to be supplied.',
-              credit: 'Credit to be supplied.'
+              caption: chapter.imageCaptions?.[index] || 'Caption to be supplied.',
+              credit: chapter.imageCredits?.[index] || 'Credit to be supplied.'
             })),
-          audio: {
-            src: null,
-            narration: null,
-            transcript: null,
-            status: 'Placeholder — audio file and narration to be supplied.'
-          },
+          audio: chapter.id === 'bharmour'
+            ? {
+                src: '/data/states/himachal/sounds/468449__maarten91__binaural-birds-loop-1.wav',
+                type: 'ambient',
+                loop: true,
+                fadeIn: 1800,
+                fadeOut: 1200,
+                narration: null,
+                transcript: null,
+                status: 'Bird ambience · Bharmour'
+              }
+            : {
+                src: null,
+                type: 'narration',
+                loop: false,
+                fadeIn: 700,
+                fadeOut: 700,
+                narration: null,
+                transcript: null,
+                status: 'Placeholder — audio file and narration to be supplied.'
+              },
+          introTiming: chapter.introTiming || null,
+          placement: chapter.image || chapter.secondImage ? 'geographic' : 'screen',
           pointId: chapter.id
         }
       ])
