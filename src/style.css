@@ -3106,3 +3106,72 @@ body.scene-transition .map-toolbox { opacity: 1 !important; visibility: visible 
 #elevation-profile .profile-point { fill: var(--profile-color); stroke: rgba(246,242,233,.72); stroke-width: .6; cursor: pointer; }
 #elevation-profile .profile-point.active { r: 4.5; stroke: #fff7c2; stroke-width: 1.4; }
 #elevation-profile .profile-position { fill: #fff7c2; stroke: #202820; stroke-width: 1.2; pointer-events: none; }
+
+/* Minimap and profile are passive indicators, never a second interaction surface. */
+#mini-map, #mini-map * { pointer-events: none !important; }
+#elevation-profile { pointer-events: none; }
+
+/* Hadsar arrival marker test: a short, restrained bounce and glow. */
+@keyframes flockArrivalBounce {
+  0%, 100% { transform: translateY(-8px) scale(1); filter: drop-shadow(0 0 0 rgba(255,219,112,0)); }
+  22% { transform: translateY(-18px) scale(1.08); filter: drop-shadow(0 0 12px rgba(255,219,112,.95)); }
+  45% { transform: translateY(-5px) scale(1.02); filter: drop-shadow(0 0 7px rgba(255,219,112,.7)); }
+  68% { transform: translateY(-12px) scale(1.05); filter: drop-shadow(0 0 10px rgba(255,219,112,.8)); }
+}
+.flock-marker.flock-arrival { animation: flockArrivalBounce 1.8s cubic-bezier(.2,.7,.2,1) both; z-index: 3; }
+@media (prefers-reduced-motion: reduce) { .flock-marker.flock-arrival { animation: none; filter: drop-shadow(0 0 8px rgba(255,219,112,.85)); } }
+
+/* Smooth chapter backdrop transitions shared by all sections. */
+.journey-identity { background: transparent !important; }
+.journey-identity::before { opacity: 1; transition: opacity 700ms cubic-bezier(.2,.7,.2,1); }
+body.scene-transition .journey-identity::before { opacity: 0; }
+body.scene-arrival .journey-identity::before,
+body.scene-discovery .journey-identity::before { opacity: 1; }
+
+/* Persistent bottom cartographic rail: background and scale never fade with
+   location content; its upper edge dissolves into the landscape. */
+.map-toolbox,
+body.scene-transition .map-toolbox,
+body.scene-arrival .map-toolbox,
+body.scene-discovery .map-toolbox { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; background: linear-gradient(to bottom, rgba(13,13,13,0) 0%, rgba(13,13,13,.62) 38%, rgba(13,13,13,.96) 100%) !important; transition: none !important; }
+.map-toolbox::before { content: ''; position: absolute; left: 0; right: 0; top: -28px; bottom: 0; z-index: -1; pointer-events: none; background: linear-gradient(to bottom, transparent 0%, rgba(13,13,13,.18) 45%, rgba(13,13,13,.72) 100%); }
+.journey-identity,
+.journey-identity #journey-identity-title,
+.journey-identity #journey-identity-location,
+.journey-identity #journey-identity-subtitle,
+#narrative-eyebrow { text-align: right !important; }
+
+/* Restore the solid bottom rail; only the title atmosphere should dissolve. */
+.map-toolbox,
+body.scene-transition .map-toolbox,
+body.scene-arrival .map-toolbox,
+body.scene-discovery .map-toolbox { background: rgba(13,13,13,.96) !important; }
+.map-toolbox::before { display: none !important; }
+
+.journey-identity { background: transparent !important; isolation: isolate; }
+.journey-identity::before { content: ''; position: absolute; z-index: -1; top: -120px; right: -340px; bottom: -120px; left: -180px; pointer-events: none; opacity: 1; background: radial-gradient(ellipse at 76% 30%, rgba(0,0,0,.68) 0%, rgba(0,0,0,.34) 42%, rgba(0,0,0,0) 86%); transition: opacity 700ms cubic-bezier(.2,.7,.2,1); }
+body.scene-transition .journey-identity::before { opacity: 0; }
+body.scene-arrival .journey-identity::before,
+body.scene-discovery .journey-identity::before { opacity: 1; }
+
+/* Smaller, softer title atmosphere: no rectangular backdrop boundary. */
+.journey-identity { background: transparent !important; overflow: visible !important; }
+.journey-identity::before { top: -28px !important; right: -90px !important; bottom: -28px !important; left: -70px !important; opacity: .78 !important; filter: blur(18px); background: radial-gradient(ellipse at 78% 42%, rgba(0,0,0,.48) 0%, rgba(0,0,0,.2) 45%, rgba(0,0,0,0) 76%) !important; }
+body.scene-transition .journey-identity::before { opacity: 0 !important; }
+
+/* Regular chapter changes are immediate: only the camera moves, not the
+   title/narrative composition. */
+body.scene-transition .journey-identity,
+body.scene-transition .journey-identity.content-leaving,
+body.scene-transition .narrative-panel,
+body.scene-transition .narrative-panel.content-leaving,
+body.scene-arrival .journey-identity,
+body.scene-arrival .narrative-panel { opacity: 1 !important; transform: none !important; transition: none !important; animation: none !important; }
+
+/* Explicit previous/next journey navigation for visitors who do not infer
+   that scrolling advances the story. */
+.journey-step-controls { order: 1; display: flex; align-items: center; gap: 4px; margin-left: 4px; }
+.journey-step-controls button { width: 30px !important; height: 30px !important; min-width: 30px !important; min-height: 30px !important; padding: 0 !important; border: 1px solid rgba(255,255,255,.24); border-radius: 8px; background: rgba(13,13,13,.86); color: rgba(246,242,233,.86); cursor: pointer; font-size: 22px; line-height: 1; }
+.journey-step-controls button:hover:not(:disabled), .journey-step-controls button:focus-visible:not(:disabled) { border-color: #e4bb72; color: #fff0c8; outline: none; }
+.journey-step-controls button:disabled { opacity: .3; cursor: not-allowed; }
+@media (max-width: 650px) { .journey-step-controls button { width: 26px !important; height: 26px !important; min-width: 26px !important; min-height: 26px !important; font-size: 18px; } }

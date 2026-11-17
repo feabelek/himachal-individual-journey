@@ -90,10 +90,6 @@ export function createElevationProfile(svg, { onSelect } = {}) {
     circle.setAttribute('cy', y(point.elevation));
     circle.setAttribute('r', point.range ? 3.5 : 2.5);
     circle.style.setProperty('--profile-color', point.distance < 0 ? '#f18700' : '#55aadd');
-    const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-    title.textContent = `${point.label} · ${point.elevation} m · ${point.distance} km from Bharmour${point.range ? ' (450–500 m range)' : ''}`;
-    circle.appendChild(title);
-    circle.addEventListener('click', () => onSelect?.(point.id));
     svg.appendChild(circle);
   });
 

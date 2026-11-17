@@ -322,6 +322,7 @@ let routeLength = 0;
 let routeStartProgress = 0;
 
 let journeyProgress = 0;
+let suppressMiniMapFullHighlight = false;
 let conclusionActive = false;
 let ambientAudio = null;
 let ambientAudioUserGesture = false;
@@ -565,7 +566,14 @@ map.addControl(new maplibregl.NavigationControl(), 'top-right');
 function initializeMiniMap() {
 miniMap = new maplibregl.Map({
   container: 'mini-map',
-  interactive: true,
+  interactive: false,
+  dragPan: false,
+  dragRotate: false,
+  scrollZoom: false,
+  touchZoomRotate: false,
+  doubleClickZoom: false,
+  boxZoom: false,
+  keyboard: false,
   attributionControl: false,
   style: {
     version: 8,
@@ -1373,7 +1381,6 @@ exhibitionUI.innerHTML = `
     <h2 id="journey-identity-title">Gaddi pastoralist journey</h2>
     <div id="journey-identity-location">Himachal Pradesh</div>
     <p id="journey-identity-subtitle">Across the seasons, between Bharmour, Darcha and Ispur.</p>
-    <button type="button" id="journey-back">← India overview</button>
   </header>
 
   <aside class="journey-rail" aria-label="Journey information">
@@ -1397,7 +1404,6 @@ exhibitionUI.innerHTML = `
       <div class="conclusion-actions">
         <button type="button" id="conclusion-return">Return to Ispur</button>
         <button type="button" id="conclusion-restart">Restart journey</button>
-        <button type="button" id="conclusion-atlas">India overview</button>
       </div>
     </div>
   </section>
@@ -1410,6 +1416,10 @@ exhibitionUI.innerHTML = `
         <button type="button" id="journey-restart">Restart journey</button>
         <button type="button" id="conclusion-prompt" hidden>Continue beyond the route →</button>
       </div>
+    </div>
+    <div class="journey-step-controls" aria-label="Journey locations">
+      <button type="button" id="journey-previous" aria-label="Previous location" title="Previous location">‹</button>
+      <button type="button" id="journey-next" aria-label="Next location" title="Next location">›</button>
     </div>
     <button type="button" id="map-north" aria-label="Reset north"><span id="north-glyph">▲</span></button>
     <div id="custom-scale-bar" aria-label="Map scale"><span>0</span><div class="custom-scale-line"><i></i></div><span id="custom-scale-distance">—</span></div>
@@ -1474,6 +1484,7 @@ function updateExhibitionRail() {
   syncAmbientAudioUI();
   const conclusionPrompt = document.querySelector('#conclusion-prompt');
   if (conclusionPrompt) conclusionPrompt.hidden = chapter.id !== 'ispur' || conclusionActive;
+  updateJourneyStepControls();
   scheduleLocationReveal(chapter);
   elevationProfileRenderer?.setJourneyState({ chapterId: chapter.id, season: exhibitionSeason });
   if (percent) percent.textContent = Number.isFinite(progress) ? `${Math.round(progress * 100)}% along route` : '—';
@@ -1481,6 +1492,13 @@ function updateExhibitionRail() {
   if (miniMapReady && miniPositionMarker && (continuousCoordinate || chapter.routeStop || chapter.center)) {
     miniPositionMarker.setLngLat(continuousCoordinate || chapter.routeStop || chapter.center);
   }
+}
+
+function updateJourneyStepControls() {
+  const previous = document.querySelector('#journey-previous');
+  const next = document.querySelector('#journey-next');
+  if (previous) previous.disabled = atlasMode || cameraAnimating || currentStoryIndex <= 1;
+  if (next) next.disabled = atlasMode || cameraAnimating || currentStoryIndex >= STORY.length - 1;
 }
 
 document.querySelector('#journey-menu-toggle').addEventListener('click', (event) => {
@@ -1512,7 +1530,12 @@ document.querySelector('#journey-explore').addEventListener('click', () => {
 document.querySelector('#journey-restart').addEventListener('click', () => {
   if (!atlasMode && currentStoryIndex !== 1) goToChapter(1);
 });
-document.querySelector('#journey-back').addEventListener('click', returnToAtlas);
+document.querySelector('#journey-previous').addEventListener('click', () => {
+  if (!atlasMode) goToChapter(Math.max(1, currentStoryIndex - 1));
+});
+document.querySelector('#journey-next').addEventListener('click', () => {
+  if (!atlasMode) goToChapter(Math.min(STORY.length - 1, currentStoryIndex + 1));
+});
 document.querySelector('#conclusion-prompt').addEventListener('click', openConclusion);
 document.querySelector('#map-zoom-in').addEventListener('click', () => map.zoomIn({ duration: 500 }));
 document.querySelector('#map-zoom-out').addEventListener('click', () => map.zoomOut({ duration: 500 }));
@@ -1751,14 +1774,10 @@ function scheduleLocationReveal(chapter) {
   updateFloatingPhoto(chapter);
   floatingPhoto.classList.remove('visible');
   const images = content?.images || [];
-  const narrativePanel = document.querySelector('.narrative-panel');
-  const identity = document.querySelector('.journey-identity');
-  narrativePanel?.classList.remove('content-leaving', 'arrival-reveal');
-  identity?.classList.remove('content-leaving', 'arrival-reveal');
-  requestAnimationFrame(() => {
-    narrativePanel?.classList.add('arrival-reveal');
-    identity?.classList.add('arrival-reveal');
-  });
+    const narrativePanel = document.querySelector('.narrative-panel');
+    const identity = document.querySelector('.journey-identity');
+    narrativePanel?.classList.remove('content-leaving', 'arrival-reveal');
+    identity?.classList.remove('content-leaving', 'arrival-reveal');
   if (images.length || chapter.image) {
     revealTimers.push(setTimeout(() => {
       if (token === revealToken) {
@@ -1812,10 +1831,6 @@ document.querySelector('#conclusion-return').addEventListener('click', () => {
 document.querySelector('#conclusion-restart').addEventListener('click', () => {
   closeConclusion();
   if (currentStoryIndex !== 1) goToChapter(1);
-});
-document.querySelector('#conclusion-atlas').addEventListener('click', () => {
-  closeConclusion();
-  returnToAtlas();
 });
 
 // ============================================================
@@ -2472,10 +2487,11 @@ function setMiniMapProgress(progress, season = 'summer') {
   const currentCoordinate = getRouteCoordinate(progress);
   const activeSeason = season === 'summer' ? 'summer' : 'winter';
   const routeProgress = progressOnMiniRoute(currentCoordinate, miniRouteMetrics[activeSeason]);
-  const p = Math.max(0, Math.min(1, Number.isFinite(routeProgress) ? routeProgress : Number(progress) || 0));
+  const rawProgress = Math.max(0, Math.min(1, Number.isFinite(routeProgress) ? routeProgress : Number(progress) || 0));
   const activeLayer = activeSeason === 'winter' ? 'mini-winter-travel' : 'mini-summer-travel';
   const inactiveLayer = activeSeason === 'winter' ? 'mini-summer-travel' : 'mini-winter-travel';
   const color = getSeasonRouteColor(activeSeason);
+  const p = suppressMiniMapFullHighlight ? Math.min(rawProgress, 0.985) : rawProgress;
   if (p <= 0) {
     if (miniMap.getLayer(activeLayer)) miniMap.setPaintProperty(activeLayer, 'line-opacity', 0);
     return;
@@ -2703,6 +2719,7 @@ function updateRouteProgress(
   flockTravelDirection = isAutumnReturn ? -1 : 1;
   const season =
     options.season || 'summer';
+  suppressMiniMapFullHighlight = options.suppressFullRouteHighlight === true;
 
   if (
     options.animate !== false
@@ -2987,8 +3004,9 @@ function updateFlockPosition(
     return;
   }
 
+  const markerMinimum = flockTravelDirection < 0 ? 0 : routeStartProgress;
   const markerProgress = Math.max(
-    routeStartProgress,
+    markerMinimum,
     Math.min(
       1,
       progress + flockTravelDirection * 0.00035
@@ -3012,6 +3030,14 @@ function updateFlockPosition(
 
   }
 
+}
+
+function triggerFlockArrival(chapterId) {
+  if (chapterId !== 'hadsar' || !flockMarker) return;
+  const element = flockMarker.getElement();
+  element.classList.remove('flock-arrival');
+  requestAnimationFrame(() => element.classList.add('flock-arrival'));
+  setTimeout(() => element.classList.remove('flock-arrival'), 1800);
 }
 
 
@@ -3957,7 +3983,8 @@ function updateMapVisibility() {
         {
           migrationPhase:
             STORY[currentStoryIndex]?.migrationPhase,
-          season: getChapterSeason(STORY[currentStoryIndex])
+          season: getChapterSeason(STORY[currentStoryIndex]),
+          suppressFullRouteHighlight: ['darcha', 'ispur'].includes(STORY[currentStoryIndex]?.id)
         }
 
       );
@@ -4963,7 +4990,8 @@ if (Number.isFinite(targetProgress)) {
       duration: 0,
       animate: false,
       migrationPhase: 'summer',
-      season: getChapterSeason(destination)
+      season: getChapterSeason(destination),
+      suppressFullRouteHighlight: ['darcha', 'ispur'].includes(destination.id)
     }
   );
 
@@ -4976,7 +5004,8 @@ if (Number.isFinite(targetProgress)) {
       migrationPhase: isAutumnReturn
         ? 'autumn-return'
         : 'summer',
-      season: getChapterSeason(destination)
+      season: getChapterSeason(destination),
+      suppressFullRouteHighlight: ['darcha', 'ispur'].includes(destination.id)
     }
   );
 
@@ -4998,7 +5027,8 @@ if (Number.isFinite(targetProgress)) {
       0,
       {
         duration: transitionDuration,
-        season: getChapterSeason(destination)
+        season: getChapterSeason(destination),
+        suppressFullRouteHighlight: ['darcha', 'ispur'].includes(destination.id)
       }
     );
 
@@ -5063,6 +5093,7 @@ if (Number.isFinite(targetProgress)) {
       destinationIndex;
 
 
+    triggerFlockArrival(destination.id);
     updateMapVisibility();
 
     updateStoryPanel();

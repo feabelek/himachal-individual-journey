@@ -666,7 +666,7 @@ export const HIMACHAL_LOCATIONS = Object.freeze(
             .filter((image) => Boolean(image.src))
             .map(({ src, index }) => ({
               src,
-              caption: chapter.imageCaptions?.[index] || 'Caption to be supplied.',
+              caption: chapter.imageCaptions?.[index] || 'Here, sheep and goats are dipped in a medicated solution to protect the flock from disease during the migration.',
               credit: chapter.imageCredits?.[index] || 'Credit to be supplied.'
             })),
           audio: chapter.id === 'bharmour'
