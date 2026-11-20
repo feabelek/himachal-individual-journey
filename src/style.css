@@ -3121,6 +3121,18 @@ body.scene-transition .map-toolbox { opacity: 1 !important; visibility: visible 
 .flock-marker.flock-arrival { animation: flockArrivalBounce 1.8s cubic-bezier(.2,.7,.2,1) both; z-index: 3; }
 @media (prefers-reduced-motion: reduce) { .flock-marker.flock-arrival { animation: none; filter: drop-shadow(0 0 8px rgba(255,219,112,.85)); } }
 
+/* Animate the sheep inside the MapLibre marker, never the marker root. The
+   root transform belongs to MapLibre's geographic positioning. */
+.flock-marker.flock-arrival { animation: none !important; }
+@keyframes flockArrivalSheep {
+  0%, 100% { margin-top: 0; filter: drop-shadow(0 0 0 rgba(255,219,112,0)); }
+  22% { margin-top: -8px; filter: drop-shadow(0 0 10px rgba(255,219,112,.95)); }
+  45% { margin-top: 3px; filter: drop-shadow(0 0 6px rgba(255,219,112,.7)); }
+  68% { margin-top: -5px; filter: drop-shadow(0 0 9px rgba(255,219,112,.8)); }
+}
+.flock-marker.flock-arrival .flock-sheep { animation: flockArrivalSheep 1.8s cubic-bezier(.2,.7,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .flock-marker.flock-arrival .flock-sheep { animation: none; filter: drop-shadow(0 0 7px rgba(255,219,112,.85)); } }
+
 /* Smooth chapter backdrop transitions shared by all sections. */
 .journey-identity { background: transparent !important; }
 .journey-identity::before { opacity: 1; transition: opacity 700ms cubic-bezier(.2,.7,.2,1); }
@@ -3175,3 +3187,156 @@ body.scene-arrival .narrative-panel { opacity: 1 !important; transform: none !im
 .journey-step-controls button:hover:not(:disabled), .journey-step-controls button:focus-visible:not(:disabled) { border-color: #e4bb72; color: #fff0c8; outline: none; }
 .journey-step-controls button:disabled { opacity: .3; cursor: not-allowed; }
 @media (max-width: 650px) { .journey-step-controls button { width: 26px !important; height: 26px !important; min-width: 26px !important; min-height: 26px !important; font-size: 18px; } }
+
+/* Supplied sheep artwork replaces the former CSS silhouettes while retaining
+   the original three-marker arrangement and animation classes. */
+.flock-sheep { width: 31px; height: 27px; border: 0; border-radius: 0; background: transparent; box-shadow: none; object-fit: contain; }
+.flock-sheep::before, .flock-sheep::after { display: none; }
+.flock-sheep-back { transform: scale(.72); }
+.flock-sheep-middle { transform: scale(.88); }
+
+/* Side-by-side flock spacing: preserve each sheep's scale and animation. */
+.flock-marker { width: 120px; }
+.flock-sheep-back { left: 0; top: 18px; }
+.flock-sheep-middle { left: 42px; top: 9px; }
+.flock-sheep-front { left: 86px; top: 17px; }
+
+/* Compact organic flock grouping. */
+.flock-marker { width: 105px; }
+.flock-sheep-back { left: 3px; top: 17px; }
+.flock-sheep-middle { left: 35px; top: 10px; }
+.flock-sheep-front { left: 68px; top: 18px; }
+
+/* Bottom rail order: legend, north, zoom, scale | spacer | attribution,
+   audio, previous/next, menu. */
+.map-toolbox { align-items: center !important; gap: 7px !important; }
+.map-toolbox > #legend-toggle { order: 0 !important; width: 62px !important; min-width: 62px !important; height: 30px !important; min-height: 30px !important; padding: 0 !important; border: 1px solid rgba(255,255,255,.24); border-radius: 5px; font-size: 8px !important; }
+.map-toolbox > #map-north { order: 1 !important; width: 30px !important; height: 30px !important; min-width: 30px !important; min-height: 30px !important; padding: 0 !important; border: 1px solid rgba(255,255,255,.2); border-radius: 3px; background: #0d0d0d; }
+#map-north { border: 0 !important; background: transparent !important; }
+#map-north #north-glyph { display: block; width: 34px; height: 30px; object-fit: contain; transform: none !important; }
+.map-toolbox .map-actions { order: 2 !important; }
+.map-toolbox #custom-scale-bar { order: 3 !important; position: static !important; transform: none !important; margin: 0 6px !important; }
+.bottom-rail-spacer { order: 4; flex: 1 1 auto; min-width: 24px; }
+.map-toolbox .map-attribution { order: 5 !important; margin-left: 0 !important; }
+.map-toolbox > #audio-toggle { order: 6 !important; width: 30px !important; height: 30px !important; min-width: 30px !important; min-height: 30px !important; padding: 0 !important; border: 1px solid rgba(255,255,255,.24); border-radius: 50%; background: transparent; color: #f0ca81; cursor: pointer; }
+.map-toolbox .journey-step-controls { order: 7 !important; margin-left: 0 !important; }
+.map-toolbox .journey-menu-wrap { order: 8 !important; margin-left: 0 !important; }
+@media (max-width: 650px) {
+  .bottom-rail-spacer { min-width: 8px; }
+  .map-toolbox > #legend-toggle { width: 52px !important; min-width: 52px !important; }
+  .map-toolbox #custom-scale-bar { margin: 0 2px !important; }
+}
+
+/* Match supplied Scale Bar.svg treatment while keeping the distance value
+   dynamically calculated by updateCustomScaleBar(). */
+.map-toolbox #custom-scale-bar { height: 28px !important; min-width: 190px !important; padding: 0 12px !important; background: rgba(13,13,13,.62) !important; color: #fff !important; font-size: 9px !important; }
+.map-toolbox > #map-north { width: 40px !important; height: 36px !important; min-width: 40px !important; min-height: 36px !important; }
+#map-north #north-glyph { width: 42px; height: 36px; }
+.map-toolbox #custom-scale-bar { position: relative; display: block; }
+.map-toolbox #custom-scale-bar > span { position: absolute; top: 2px; line-height: 1; }
+.map-toolbox #custom-scale-bar > span:first-child { left: 7px; }
+.map-toolbox #custom-scale-bar > span:last-child { right: 7px; }
+.map-toolbox .custom-scale-line { position: absolute; left: 50%; bottom: 4px; width: 145px !important; height: 5px !important; border-top: 2px solid #fff !important; transform: translateX(-50%); }
+.map-toolbox .custom-scale-line::before,
+.map-toolbox .custom-scale-line::after { display: none !important; }
+
+/* Constrain the scale instrument to its actual compact footprint; the inline
+   line width supplied by updateCustomScaleBar() remains dynamic. */
+.map-toolbox #custom-scale-bar { flex: 0 0 190px !important; width: 190px !important; min-width: 190px !important; max-width: 190px !important; }
+@media (max-width: 650px) {
+  .map-toolbox #custom-scale-bar { flex-basis: 135px !important; width: 135px !important; min-width: 135px !important; max-width: 135px !important; }
+}
+
+/* Use the supplied reference artwork directly for the scale instrument. */
+#scale-bar-svg { order: 3; display: block; width: 230px; height: 42px; object-fit: contain; flex: 0 0 230px; }
+@media (max-width: 650px) {
+  #scale-bar-svg { width: 175px; height: 34px; flex-basis: 175px; }
+}
+
+/* Unified rounded control language. */
+.map-toolbox button,
+.map-toolbox > #map-north,
+.map-actions button,
+#journey-menu-toggle,
+.journey-step-controls button,
+#map-attribution-toggle,
+#audio-toggle { border-radius: 8px !important; }
+#audio-toggle { display: grid; place-items: center; width: 30px !important; height: 30px !important; min-width: 30px !important; min-height: 30px !important; padding: 0 !important; border: 1px solid rgba(228,187,114,.65) !important; background: transparent !important; color: #f0ca81 !important; font: 700 11px/1 Arial, sans-serif !important; letter-spacing: -2px; cursor: pointer; }
+#audio-toggle[data-playing="true"] { background: rgba(228,187,114,.16) !important; box-shadow: 0 0 0 4px rgba(228,187,114,.1); animation: audioWavePulse 1.4s ease-in-out infinite; }
+@keyframes audioWavePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+.map-attribution { background: rgba(13,13,13,.94) !important; color: rgba(246,242,233,.8) !important; border: 1px solid rgba(255,255,255,.2); }
+#map-attribution-toggle { border-radius: 50% !important; border: 1px solid rgba(228,187,114,.7) !important; background: #17211b !important; color: #f0ca81 !important; }
+#map-attribution-toggle:hover, #map-attribution-toggle:focus-visible { background: #26382d !important; }
+@media (prefers-reduced-motion: reduce) { #audio-toggle[data-playing="true"] { animation: none; } }
+
+/* Supplied waveform-style audio control. */
+#audio-toggle { width: 42px !important; height: 30px !important; min-width: 42px !important; min-height: 30px !important; padding: 2px !important; border: 2px solid #fff !important; border-radius: 8px !important; background: #123d72 !important; box-shadow: 0 0 0 1px #2d8ed7; letter-spacing: 0; }
+.audio-wave-icon { display: block; width: 100%; height: 100%; overflow: visible; }
+.audio-wave-line { fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.audio-wave-baseline { fill: none; stroke: rgba(255,255,255,.9); stroke-width: .8; }
+#audio-toggle[data-playing="true"] { background: #1d65a5 !important; box-shadow: 0 0 0 1px #65c3ff, 0 0 10px rgba(63,170,255,.55); }
+
+/* Compact equalizer-style sound icon. */
+.audio-wave-icon { width: 100%; height: 100%; }
+.audio-level { fill: #fff; }
+#audio-toggle[data-playing="true"] .audio-level { fill: #dff4ff; }
+
+/* Sound control uses the existing warm, dark cartographic palette. */
+#audio-toggle { border: 1px solid rgba(228,187,114,.7) !important; border-radius: 8px !important; background: rgba(13,13,13,.9) !important; box-shadow: none !important; color: #f0ca81 !important; }
+.audio-level { fill: #f0ca81; }
+#audio-toggle[data-playing="true"] { background: rgba(228,187,114,.16) !important; box-shadow: 0 0 0 3px rgba(228,187,114,.12) !important; }
+#audio-toggle[data-playing="true"] .audio-level { fill: #fff0c8; }
+
+/* Restore the compact play/pause control. */
+#audio-toggle { width: 30px !important; height: 30px !important; min-width: 30px !important; min-height: 30px !important; border: 1px solid rgba(228,187,114,.7) !important; border-radius: 50% !important; background: rgba(13,13,13,.9) !important; color: #f0ca81 !important; font: 12px/1 Arial, sans-serif !important; letter-spacing: 0 !important; box-shadow: none !important; }
+#audio-toggle[data-playing="true"] { background: rgba(228,187,114,.16) !important; box-shadow: 0 0 0 3px rgba(228,187,114,.12) !important; }
+
+/* Keep the audio glyph visually consistent with the compact control icons. */
+#audio-toggle { font-size: 10px !important; }
+
+/* Journey menu opens inward from the right-side control position. */
+.journey-menu { left: auto !important; right: 0 !important; transform-origin: bottom right !important; }
+
+/* Unified rail interaction states. */
+.map-toolbox button:focus,
+.map-toolbox button:focus-visible { outline: none !important; }
+.map-toolbox button:focus-visible { box-shadow: 0 0 0 2px rgba(228,187,114,.92), 0 0 0 4px rgba(228,187,114,.18) !important; }
+.map-toolbox button:active:not(:disabled) { transform: scale(.94); background: rgba(228,187,114,.2) !important; }
+#legend-toggle[aria-expanded="true"],
+#map-attribution-toggle[aria-expanded="true"],
+#journey-menu-toggle[aria-expanded="true"],
+#audio-toggle[data-playing="true"] { border-color: rgba(228,187,114,.9) !important; background: rgba(228,187,114,.18) !important; color: #fff0c8 !important; box-shadow: 0 0 0 2px rgba(228,187,114,.16) !important; }
+.map-toolbox button:disabled { opacity: .34; cursor: not-allowed; }
+
+/* Slightly larger north-arrow artwork; the button hit area is unchanged. */
+#map-north #north-glyph { width: 52px !important; height: 44px !important; max-width: none; object-fit: contain; }
+.map-toolbox > #map-north { overflow: visible; }
+@media (max-width: 650px) {
+  #map-north #north-glyph { width: 40px !important; height: 34px !important; }
+}
+
+/* Left rail order: legend, zoom controls, north arrow, scale. */
+.map-toolbox > #legend-toggle { order: 0 !important; }
+.map-toolbox .map-actions { order: 1 !important; }
+.map-toolbox > #map-north { order: 2 !important; width: 30px !important; height: 30px !important; min-width: 30px !important; min-height: 30px !important; overflow: visible; }
+.map-toolbox #custom-scale-bar { order: 3 !important; }
+#map-north #north-glyph { width: 44px !important; height: 38px !important; max-width: none; object-fit: contain; }
+@media (max-width: 650px) {
+  #map-north #north-glyph { width: 36px !important; height: 32px !important; }
+}
+
+/* Optically center the supplied SVG artwork inside the fixed north button.
+   The source viewBox contains internal whitespace, so center the image box
+   explicitly rather than relying on inline-image baseline alignment. */
+.map-toolbox > #map-north { position: relative; display: grid; place-items: center; }
+#map-north #north-glyph { position: absolute; left: 50%; top: 50%; margin: 0; transform: translate(-50%, -50%) !important; transform-origin: center; }
+
+/* Enlarge only the north-arrow artwork while retaining the centered button. */
+#map-north #north-glyph { width: 58px !important; height: 51px !important; }
+@media (max-width: 650px) {
+  #map-north #north-glyph { width: 48px !important; height: 43px !important; }
+}
+
+/* The SVG reference includes its own translucent rectangle; the live scale
+   uses the existing dynamic markup so it sits directly on the rail. */
+.map-toolbox #custom-scale-bar { background: transparent !important; border: 0 !important; box-shadow: none !important; }

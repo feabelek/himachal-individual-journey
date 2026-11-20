@@ -12,6 +12,8 @@ export const MAP_ASSETS = {
       '/data/states/himachal/geospatial/routes/HP_Story_Route_Final.geojson',
     storyPoints:
       '/data/states/himachal/geospatial/points/HP_Story_Route_Points_Final.geojson',
+    scaleSpreadPoints:
+      '/data/states/himachal/geospatial/points/HP_Scale_and_Spread.geojson',
     shearing:
       '/data/states/himachal/geospatial/context/Shearing_Locations.geojson',
     rivers:

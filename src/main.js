@@ -46,6 +46,7 @@ maplibregl.setWorkerUrl(workerUrl);
 const ROUTE_URL = MAP_ASSETS.himachal.route;
 const ISPUR_DARCHA_ROUTE_URL = MAP_ASSETS.himachal.storyRoute;
 const POINTS_URL = MAP_ASSETS.himachal.storyPoints;
+const SCALE_SPREAD_POINTS_URL = MAP_ASSETS.himachal.scaleSpreadPoints;
 const SHEARING_URL = MAP_ASSETS.himachal.shearing;
 const RIVERS_URL = MAP_ASSETS.himachal.rivers;
 const TEMPLE_URL = MAP_ASSETS.himachal.temple;
@@ -323,6 +324,8 @@ let routeStartProgress = 0;
 
 let journeyProgress = 0;
 let suppressMiniMapFullHighlight = false;
+let showBothMiniRoutes = false;
+let fullRouteOverviewActive = false;
 let conclusionActive = false;
 let ambientAudio = null;
 let ambientAudioUserGesture = false;
@@ -636,7 +639,7 @@ miniMap.on('load', async () => {
     const bounds = new maplibregl.LngLatBounds();
     summerCoordinates.forEach((coordinate) => bounds.extend(coordinate));
     winterCoordinates.forEach((coordinate) => bounds.extend(coordinate));
-    if (!bounds.isEmpty()) miniMap.fitBounds(bounds, { padding: 18, duration: 0 });
+    if (!bounds.isEmpty()) miniMap.fitBounds(bounds, { padding: 30, duration: 0 });
     miniMapReady = true;
     setMiniMapProgress(journeyProgress, exhibitionSeason);
     updateExhibitionRail();
@@ -1409,6 +1412,23 @@ exhibitionUI.innerHTML = `
   </section>
 
   <nav class="map-toolbox" aria-label="Map controls and scale">
+    <button type="button" id="legend-toggle" aria-expanded="false">Legend</button>
+    <div class="map-actions">
+      <button type="button" id="map-zoom-in" aria-label="Zoom in">+</button>
+      <button type="button" id="map-zoom-out" aria-label="Zoom out">−</button>
+    </div>
+    <button type="button" id="map-north" aria-label="Reset north"><img id="north-glyph" src="/data/images/Map Scale Control.svg" alt=""></button>
+    <img id="scale-bar-svg" src="/data/images/Scale Bar.svg" alt="Map scale bar" aria-label="Map scale bar">
+    <div class="bottom-rail-spacer" aria-hidden="true"></div>
+    <div class="map-attribution">
+      <span id="map-attribution-label" hidden>Esri, Maxar, Earthstar Geographics | MapLibre</span>
+      <button type="button" id="map-attribution-toggle" aria-label="Show map attribution" aria-expanded="false">i</button>
+    </div>
+    <button type="button" id="audio-toggle" aria-label="Play location ambience">▶</button>
+    <div class="journey-step-controls" aria-label="Journey locations">
+      <button type="button" id="journey-previous" aria-label="Previous location" title="Previous location">‹</button>
+      <button type="button" id="journey-next" aria-label="Next location" title="Next location">›</button>
+    </div>
     <div class="journey-menu-wrap">
       <button type="button" id="journey-menu-toggle" aria-label="Open journey menu" aria-expanded="false">☰</button>
       <div class="journey-menu" hidden>
@@ -1416,21 +1436,6 @@ exhibitionUI.innerHTML = `
         <button type="button" id="journey-restart">Restart journey</button>
         <button type="button" id="conclusion-prompt" hidden>Continue beyond the route →</button>
       </div>
-    </div>
-    <div class="journey-step-controls" aria-label="Journey locations">
-      <button type="button" id="journey-previous" aria-label="Previous location" title="Previous location">‹</button>
-      <button type="button" id="journey-next" aria-label="Next location" title="Next location">›</button>
-    </div>
-    <button type="button" id="map-north" aria-label="Reset north"><span id="north-glyph">▲</span></button>
-    <div id="custom-scale-bar" aria-label="Map scale"><span>0</span><div class="custom-scale-line"><i></i></div><span id="custom-scale-distance">—</span></div>
-    <div class="map-actions">
-      <button type="button" id="map-zoom-in" aria-label="Zoom in">+</button>
-      <button type="button" id="map-zoom-out" aria-label="Zoom out">−</button>
-      <button type="button" id="legend-toggle" aria-expanded="false">Legend</button>
-    </div>
-    <div class="map-attribution">
-      <span id="map-attribution-label" hidden>Esri, Maxar, Earthstar Geographics | MapLibre</span>
-      <button type="button" id="map-attribution-toggle" aria-label="Show map attribution" aria-expanded="false">i</button>
     </div>
   </nav>
   <div class="placement-switch" hidden>
@@ -1518,6 +1523,17 @@ document.querySelector('#map-attribution-toggle').addEventListener('click', (eve
   const open = label.hidden;
   label.hidden = !open;
   event.currentTarget.setAttribute('aria-expanded', String(open));
+});
+document.querySelector('#audio-toggle').addEventListener('click', () => {
+  ambientAudioUserGesture = true;
+  if (ambientAudio && !ambientAudio.paused) {
+    ambientAudioMuted = true;
+    stopAmbientForDeparture();
+  } else {
+    ambientAudioMuted = false;
+    startAmbientForLocation(STORY[currentStoryIndex], { fade: false });
+  }
+  syncAmbientAudioUI();
 });
 document.querySelector('#journey-explore').addEventListener('click', () => {
   exhibitionMode = exhibitionMode === 'explore' ? 'guided' : 'explore';
@@ -2358,7 +2374,6 @@ function updateStoryPanel() {
         chapter
       );
 
-
       // ======================================================
       // PROGRESS
       // ======================================================
@@ -2484,6 +2499,16 @@ function getSeasonRouteColor(
 
 function setMiniMapProgress(progress, season = 'summer') {
   if (!miniMapReady || !miniMap) return;
+  if (showBothMiniRoutes) {
+    ['mini-summer-travel', 'mini-winter-travel'].forEach((layerId) => {
+      if (miniMap.getLayer(layerId)) {
+        const color = layerId.includes('summer') ? '#f18700' : '#55aadd';
+        miniMap.setPaintProperty(layerId, 'line-opacity', 1);
+        miniMap.setPaintProperty(layerId, 'line-gradient', ['interpolate', ['linear'], ['line-progress'], 0, color, 1, color]);
+      }
+    });
+    return;
+  }
   const currentCoordinate = getRouteCoordinate(progress);
   const activeSeason = season === 'summer' ? 'summer' : 'winter';
   const routeProgress = progressOnMiniRoute(currentCoordinate, miniRouteMetrics[activeSeason]);
@@ -2520,11 +2545,9 @@ function setRouteProgressPaint(
     getSeasonRouteColor(season);
   setMiniMapProgress(progress, season);
 
-  const visibleProgress =
-    Math.max(
-      routeStartProgress,
-      progress
-    );
+  const visibleProgress = fullRouteOverviewActive
+    ? 1
+    : Math.max(routeStartProgress, progress);
 
   if (
     visibleProgress <= routeStartProgress
@@ -2720,6 +2743,8 @@ function updateRouteProgress(
   const season =
     options.season || 'summer';
   suppressMiniMapFullHighlight = options.suppressFullRouteHighlight === true;
+  showBothMiniRoutes = options.showBothRoutes === true;
+  fullRouteOverviewActive = options.fullRouteOverview === true;
 
   if (
     options.animate !== false
@@ -2951,13 +2976,12 @@ function getStoryRouteProgress(chapter) {
 
   // Summer overview uses exactly the same position as Darcha.
   if (chapter.id === 'full-route') {
-
-    const darcha = STORY.find(
-      item => item.id === 'darcha'
+    const ispur = STORY.find(
+      item => item.id === 'ispur'
     );
 
-    if (darcha) {
-      return getStoryRouteProgress(darcha);
+    if (ispur) {
+      return getStoryRouteProgress(ispur);
     }
 
     return null;
@@ -3004,7 +3028,9 @@ function updateFlockPosition(
     return;
   }
 
-  const markerMinimum = flockTravelDirection < 0 ? 0 : routeStartProgress;
+  const markerMinimum = fullRouteOverviewActive
+    ? 0
+    : flockTravelDirection < 0 ? 0 : routeStartProgress;
   const markerProgress = Math.max(
     markerMinimum,
     Math.min(
@@ -3782,8 +3808,8 @@ function updateMapVisibility() {
     currentStoryIndex >= 1;
 
   const showHimachalBoundary =
-    !atlasMode
-    && activeStoryId === 'himachal';
+    atlasMode
+    || activeStoryId === 'himachal';
   const showDistrictBoundaries = atlasMode;
 
   const showKugtiContext =
@@ -3833,6 +3859,9 @@ function updateMapVisibility() {
 
   if (map.getLayer('himachal-district-boundaries')) {
     map.setLayoutProperty('himachal-district-boundaries', 'visibility', showDistrictBoundaries ? 'visible' : 'none');
+  }
+  if (map.getLayer('scale-spread-points')) {
+    map.setLayoutProperty('scale-spread-points', 'visibility', atlasMode ? 'visible' : 'none');
   }
 
   ['route-points', 'route-labels'].forEach((layerId) => {
@@ -3984,7 +4013,9 @@ function updateMapVisibility() {
           migrationPhase:
             STORY[currentStoryIndex]?.migrationPhase,
           season: getChapterSeason(STORY[currentStoryIndex]),
-          suppressFullRouteHighlight: ['darcha', 'ispur'].includes(STORY[currentStoryIndex]?.id)
+          suppressFullRouteHighlight: ['darcha', 'ispur'].includes(STORY[currentStoryIndex]?.id),
+          showBothRoutes: STORY[currentStoryIndex]?.id === 'full-route',
+          fullRouteOverview: STORY[currentStoryIndex]?.id === 'full-route'
         }
 
       );
@@ -4991,7 +5022,9 @@ if (Number.isFinite(targetProgress)) {
       animate: false,
       migrationPhase: 'summer',
       season: getChapterSeason(destination),
-      suppressFullRouteHighlight: ['darcha', 'ispur'].includes(destination.id)
+      suppressFullRouteHighlight: ['darcha', 'ispur'].includes(destination.id),
+      showBothRoutes: destination.id === 'full-route',
+      fullRouteOverview: destination.id === 'full-route'
     }
   );
 
@@ -5005,7 +5038,9 @@ if (Number.isFinite(targetProgress)) {
         ? 'autumn-return'
         : 'summer',
       season: getChapterSeason(destination),
-      suppressFullRouteHighlight: ['darcha', 'ispur'].includes(destination.id)
+      suppressFullRouteHighlight: ['darcha', 'ispur'].includes(destination.id),
+      showBothRoutes: destination.id === 'full-route',
+      fullRouteOverview: destination.id === 'full-route'
     }
   );
 
@@ -5028,7 +5063,9 @@ if (Number.isFinite(targetProgress)) {
       {
         duration: transitionDuration,
         season: getChapterSeason(destination),
-        suppressFullRouteHighlight: ['darcha', 'ispur'].includes(destination.id)
+        suppressFullRouteHighlight: ['darcha', 'ispur'].includes(destination.id),
+        showBothRoutes: destination.id === 'full-route',
+        fullRouteOverview: destination.id === 'full-route'
       }
     );
 
@@ -5475,9 +5512,9 @@ map.on(
         'The moving flock on the Gaddi migration route'
       );
       flockElement.innerHTML = `
-        <span class="flock-sheep flock-sheep-back" aria-hidden="true"></span>
-        <span class="flock-sheep flock-sheep-middle" aria-hidden="true"></span>
-        <span class="flock-sheep flock-sheep-front" aria-hidden="true"></span>
+        <img class="flock-sheep flock-sheep-back" src="/data/images/sheep_icon.svg" alt="" aria-hidden="true">
+        <img class="flock-sheep flock-sheep-middle" src="/data/images/sheep_icon.svg" alt="" aria-hidden="true">
+        <img class="flock-sheep flock-sheep-front" src="/data/images/sheep_icon.svg" alt="" aria-hidden="true">
       `;
 
       flockMarker = new maplibregl.Marker({
@@ -6121,6 +6158,27 @@ map.on(
 
       );
 
+
+      try {
+        const scaleSpreadResponse = await fetch(SCALE_SPREAD_POINTS_URL);
+        if (!scaleSpreadResponse.ok) throw new Error(`Could not load scale/spread points: ${scaleSpreadResponse.status}`);
+        map.addSource('scale-spread-points', { type: 'geojson', data: await scaleSpreadResponse.json() });
+        map.addLayer({
+          id: 'scale-spread-points',
+          type: 'circle',
+          source: 'scale-spread-points',
+          layout: { visibility: 'visible' },
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 1.8, 8, 3, 12, 5],
+            'circle-color': '#fff057',
+            'circle-opacity': 0.65,
+            'circle-stroke-color': '#d8f2e8',
+            'circle-stroke-width': 0.5
+          }
+        });
+      } catch (error) {
+        console.warn('Scale and spread points unavailable:', error);
+      }
 
       // ======================================================
       // POINT SYMBOLS
