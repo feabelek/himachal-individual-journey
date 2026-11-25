@@ -46,6 +46,7 @@ maplibregl.setWorkerUrl(workerUrl);
 const ROUTE_URL = MAP_ASSETS.himachal.route;
 const ISPUR_DARCHA_ROUTE_URL = MAP_ASSETS.himachal.storyRoute;
 const POINTS_URL = MAP_ASSETS.himachal.storyPoints;
+const SCALE_SPREAD_POINTS_URL = MAP_ASSETS.himachal.scaleSpreadPoints;
 const SHEARING_URL = MAP_ASSETS.himachal.shearing;
 const RIVERS_URL = MAP_ASSETS.himachal.rivers;
 const TEMPLE_URL = MAP_ASSETS.himachal.temple;
@@ -3859,6 +3860,9 @@ function updateMapVisibility() {
   if (map.getLayer('himachal-district-boundaries')) {
     map.setLayoutProperty('himachal-district-boundaries', 'visibility', showDistrictBoundaries ? 'visible' : 'none');
   }
+  if (map.getLayer('scale-spread-points')) {
+    map.setLayoutProperty('scale-spread-points', 'visibility', atlasMode ? 'visible' : 'none');
+  }
 
   ['route-points', 'route-labels'].forEach((layerId) => {
     if (map.getLayer(layerId)) {
@@ -6154,6 +6158,27 @@ map.on(
 
       );
 
+
+      try {
+        const scaleSpreadResponse = await fetch(SCALE_SPREAD_POINTS_URL);
+        if (!scaleSpreadResponse.ok) throw new Error(`Could not load scale/spread points: ${scaleSpreadResponse.status}`);
+        map.addSource('scale-spread-points', { type: 'geojson', data: await scaleSpreadResponse.json() });
+        map.addLayer({
+          id: 'scale-spread-points',
+          type: 'circle',
+          source: 'scale-spread-points',
+          layout: { visibility: 'visible' },
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 1.8, 8, 3, 12, 5],
+            'circle-color': '#fff057',
+            'circle-opacity': 0.65,
+            'circle-stroke-color': '#d8f2e8',
+            'circle-stroke-width': 0.5
+          }
+        });
+      } catch (error) {
+        console.warn('Scale and spread points unavailable:', error);
+      }
 
       // ======================================================
       // POINT SYMBOLS
